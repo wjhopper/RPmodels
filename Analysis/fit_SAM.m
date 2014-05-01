@@ -19,8 +19,7 @@ O_two=params(5);
 O_seven=params(6);
 
 p_sample_study=[S_one S_two S_two S_two]./(([S_one, S_two S_two S_two]*30)  + [O_imm O_imm O_two O_seven]);
-p_recover=[R_one R_correct]./([R_one R_correct]+O_imm);
-
+p_recover=[R_one R_correct R_one R_correct R_one R_correct]./([R_one R_correct R_one R_correct R_one R_correct]+[ O_imm O_imm  O_two O_two O_seven O_seven]);
 
 % After initial Study
 p_sample_practice=1-((1-p_sample_study(1))^k);
@@ -40,23 +39,23 @@ p_sample_test_incorrect_imm=S_one/((S_one*floor(p_recall_practice*nItems))...
                              +(S_one*(1-p_recall_practice)*nItems)+O_imm);
 p_recall_test_correct=(1-((1-p_sample_test_correct_imm)^k))*p_recover(2);
 p_recall_test_incorrect_imm=(1-((1-p_sample_test_incorrect_imm))^k)*p_recover(1);
-p_recall_test_imm=(p_recall_test_correct*p_recall_practice) + (p_recall_test_incorrect_imm*(1-p_sample_practice));                         
+p_recall_test_imm=(p_recall_test_correct*p_recall_practice) + (p_recall_test_incorrect_imm*(1-p_sample_practice));
 %p_recall_test_imm=((floor(p_recall_practice*nItems)/nItems)*p_recall_test_correct)...
 %                  + ((ceil((1-p_recall_practice)*nItems)/nItems)*p_recall_test_incorrect_imm);
 
 % After 2 days
 %Studied Items
 p_sample_study_two=1-((1-p_sample_study(3))^k);
-p_recall_study_two=p_sample_study_two*p_recover(1);
+p_recall_study_two=p_sample_study_two*p_recover(3);
 %Tested Items
 p_sample_test_correct_two=S_two/((S_two*p_recall_practice*nItems)...
                            +(S_one*(1-p_recall_practice)*nItems)+O_two);
 % p_sample_test_correct_two=S_one/((S_one*p_recall_practice*nItems)...
 %                            +(S_one*(1-p_recall_practice)*nItems)+O_two);                       
-p_recall_test_correct_two=(1-((1-p_sample_test_correct_two)^k))*p_recover(2);
+p_recall_test_correct_two=(1-((1-p_sample_test_correct_two)^k))*p_recover(4);
 p_sample_test_incorrect_two=S_one/((S_two*p_recall_practice*nItems)...
                              +(S_one*(1-p_recall_practice)*nItems)+O_two);
-p_recall_test_incorrect_two=(1-((1-p_sample_test_incorrect_two)^k))*p_recover(1);
+p_recall_test_incorrect_two=(1-((1-p_sample_test_incorrect_two)^k))*p_recover(3);
 p_recall_test_two= ((p_recall_practice)*p_recall_test_correct_two)...
                     + ((1-p_recall_practice)*p_recall_test_incorrect_two);
                
@@ -64,16 +63,16 @@ p_recall_test_two= ((p_recall_practice)*p_recall_test_correct_two)...
 %After 7 days
 %Studied Itesm
 p_sample_study_seven=1-((1-p_sample_study(4))^k);
-p_recall_study_seven=p_sample_study_seven*p_recover(1);
+p_recall_study_seven=p_sample_study_seven*p_recover(5);
 %Tested Items
 p_sample_test_correct_seven=S_two/((S_two*p_recall_practice*nItems)...
                            +(S_one*(1-p_recall_practice)*nItems)+O_seven);
 % p_sample_test_correct_seven=S_one/((S_two*p_recall_practice*nItems)...
 %                            +(S_one*(1-p_recall_practice)*nItems)+O_seven);
-p_recall_test_correct_seven=(1-((1-p_sample_test_correct_seven)^k))*p_recover(2);
+p_recall_test_correct_seven=(1-((1-p_sample_test_correct_seven)^k))*p_recover(6);
 p_sample_test_incorrect_seven=S_one/((S_two*p_recall_practice*nItems)...
                              +(S_one*(1-p_recall_practice)*nItems)+O_seven);
-p_recall_test_incorrect_seven=(1-((1-p_sample_test_incorrect_seven)^k))*p_recover(1);
+p_recall_test_incorrect_seven=(1-((1-p_sample_test_incorrect_seven)^k))*p_recover(5);
 p_recall_test_seven= ((p_recall_practice)*p_recall_test_correct_seven)...
                     + ((1-p_recall_practice)*p_recall_test_incorrect_seven);
                 
@@ -85,8 +84,9 @@ pred_tot=[p_recall_practice p_recall_study_imm p_recall_test_imm ...
 
 Lu=(data.*log(data))+((1-data).*log(1-data));
 Lc=(data.*log(pred_tot))+((1-data).*log(1-pred_tot));
-err=-sum((2*120*(Lc-Lu)));
-
+err=-sum((2*120*(Lc(1:7)-Lu(1:7))));
+% err=err-(2*120*9*(Lc(2)-Lu(2)));
+% err=err-(2*120*9*(Lc(3)-Lu(3)));
 if (S_one <=0 || S_two <= 0 || R_one <= 0 || R_correct <= 0 || O_two <= 0.01 || O_seven <= 0.01)
     err=1000000;
 end
