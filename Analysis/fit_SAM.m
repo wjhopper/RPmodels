@@ -15,8 +15,8 @@ S_two=params(2);
 R_one=params(3);
 %R_two=params(4);
 R_correct=params(4);
-O_two=params(5);
-O_seven=params(6);
+O_two=(params(5)*2)+1;
+O_seven=(params(5)*7)+1;
 
 p_sample_study=[S_one S_two S_two S_two]./(([S_one, S_two S_two S_two]*30)  + [O_imm O_imm O_two O_seven]);
 p_recover=[R_one R_correct R_one R_correct R_one R_correct]./([R_one R_correct R_one R_correct R_one R_correct]+[ O_imm O_imm  O_two O_two O_seven O_seven]);
