@@ -8,112 +8,37 @@ function  err = fit_SAM_RL_Sim(params)
 data=[.70,.81,.75,.54,.68,.42,.56];
 k=500;
 nItems=30;
+nSub=10000;
 O_imm=1;
-S_one=params(1);
-S_two=params(2);
+S1=params(1);
+S2=params(2);
 rho=params(3);
-R_one=params(4);
+R1=params(4);
 R_correct=params(5);
-O_two=params(6);
-O_seven=params(7);
+O2=params(6);
+O7=params(7);
 
 %% Practice Test!!!
-study=[normrnd(S_one,rho,1000,nItems) repmat(O_imm,1000,1)];% 30 Item Strengths after initial Study, 1000 subjects, and interference
-study(study<0)=0; % make 0 the minimum strength
-study(:,end+1)=sum(study,2); % sum of within-experiment item strengths and interference parameter (i.e. denominator of luce choice sampling rule)
-study(:,1:(end-1))=study(:,1:(end-1))./repmat((study(:,end)),1,size(study(:,1:(end-1)),2)); % probability of sampling each item on an attempt
-samples=mnrnd(k,study(:,1:end-1)); %500 attempts at sampling items for list, returns the # of time each item was sampled
-sample_fails=(samples==0); % record sampling failures
-recalled=zeros(size(samples,1),size(samples,2)); % initialize 
-pack; % optimize memory
-
-% this maybe couldbe optimized by doing it row by row, instead of element
-% by element.... or somehow getting a cell array out of binornd......
-for i = 1:numel(samples) % each item, for each 'participant'......
-    
-    if samples(i) > 0 % if an item was sampled at least once
-        recovery = binornd(1,R_one/(R_one + O_imm),1,samples(i)); % attempt-level results of n recovery trials
-        [~,first_fail] = min(recovery); 
-        [~, first_hit] = max(recovery);
-        if first_hit > first_fail; % only if success comes before failure can you ever recall!
-            recalled(i)=1;
-        end
-    end 
-
-end                
+sampled=sample(S1,rho,O_imm,nSub,nItems,k,'study');
+recalled=recover(R1,rho,O_imm,sampled);       
 practice_test=mean(mean(recalled(:,1:end-1),2));
 
 
 %% Immediate Test: Restudied 
-restudy=[normrnd(S_two,rho,1000,nItems) repmat(O_imm,1000,1)];% 30 Item Strengths after initial restudy, 1000 subjects, and interference
-restudy(restudy<0)=0; % make 0 the minimum strength
-restudy(:,end+1)=sum(restudy,2); % sum of within-experiment item strengths and interference parameter (i.e. denominator of luce choice sampling rule)
-restudy(:,1:(end-1))=restudy(:,1:(end-1))./repmat((restudy(:,end)),1,size(restudy(:,1:(end-1)),2)); % probability of sampling each item on an attempt
-restudy_samples=mnrnd(k,restudy(:,1:end-1)); %500 attempts at sampling items for list, returns the # of time each item was sampled
-recalled=zeros(size(restudy_samples,1),size(restudy_samples,2)); % initialize 
-pack; % optimize memory
-
-for i = 1:numel(restudy_samples) % each item, for each 'participant'......
-    
-    if restudy_samples(i) > 0 % if an item was sampled at least once
-        recovery = binornd(1,R_one/(R_one + O_imm),1,restudy_samples(i)); % attempt-level results of n recovery trials
-        [~,first_fail] = min(recovery); 
-        [~, first_hit] = max(recovery);
-        if first_hit > first_fail; % only if success comes before failure can you ever recall!
-            recalled(i)=1;
-        end
-    end 
-
-end                
+sampled=sample((S2-S1),rho,O_imm,nSub,nItems,k,'restudy',sampled);
+recalled=recover(R1,rho,O_imm,sampled); 
 restudied_imm_test=mean(mean(recalled(:,1:end-1,2)));
 
 %% Immediate Test: Tested 
-tested=[ nan(size(recalled,1),size(recalled,2))  repmat(O_two,1000,1)] ; % initialize 
-tested(recalled(:,1:end-1)==1)=normrnd(S_two,rho,1,numel(tested(recalled==1)));
-tested(recalled(:,1:end-1)==0)=normrnd(S_one,rho,1,numel(tested(recalled==0)));
-tested(tested<0)=0;
-tested(:,end+1)=sum(tested,2); % sum of within-experiment item strengths and interference parameter (i.e. denominator of luce choice sampling rule)
-tested(:,1:(end-1))=tested(:,1:(end-1))./repmat((tested(:,end)),1,size(tested(:,1:(end-1)),2)); % probability of sampling each item on an attempt
-tested_samples=mnrnd(k,tested(:,1:end-1)); %500 attempts at sampling items for list, returns the # of time each item was sampled
-recalled=zeros(size(tested_samples,1),size(tested_samples,2)); % initialize 
-
-for i = 1:numel(tested_samples) % each item, for each 'participant'......
-    
-    if (tested_samples(i) > 0) && (sample_fails ~= 1) % if an item was sampled at least once
-        recovery = binornd(1,R_one/(R_one + O_imm),1,tested_samples(i)); % attempt-level results of n recovery trials
-        [~,first_fail] = min(recovery); 
-        [~, first_hit] = max(recovery);
-        if first_hit > first_fail; % only if success comes before failure can you ever recall!
-            recalled(i)=1;
-        end
-    end 
-
-end                
+sampled=sample(S1,rho,O_imm,nSub,nItems,k,'test');
+recalled=recover(R1,rho,O_imm,sampled); 
 tested_imm_test=mean(mean(recalled(:,1:end-1,2)));
 
 
 %% 2-Day Delay: Restudied
-restudy_2_day=[normrnd(S_two,rho,1000,nItems) repmat(O_two,1000,1)];% 30 Item Strengths after initial restudy, 1000 subjects, and interference
-restudy_2_day(restudy_2_day<0)=0; % make 0 the minimum strength
-restudy_2_day(:,end+1)=sum(restudy_2_day,2); % sum of within-experiment item strengths and interference parameter (i.e. denominator of luce choice sampling rule)
-restudy_2_day(:,1:(end-1))=restudy_2_day(:,1:(end-1))./repmat((restudy_2_day(:,end)),1,size(restudy_2_day(:,1:(end-1)),2)); % probability of sampling each item on an attempt
-restudy_2_day_samples=mnrnd(k,restudy_2_day(:,1:end-1)); %500 attempts at sampling items for list, returns the # of time each item was sampled
-recalled=zeros(size(restudy_2_day_samples,1),size(restudy_2_day_samples,2)); % initialize 
-pack; % optimize memory
-
-for i = 1:numel(restudy_2_day_samples) % each item, for each 'participant'......
-    
-    if restudy_2_day_samples(i) > 0 % if an item was sampled at least once
-        recovery = binornd(1,R_one/(R_one + O_two),1,restudy_2_day_samples(i)); % attempt-level results of n recovery trials
-        [~,first_fail] = min(recovery); 
-        [~, first_hit] = max(recovery);
-        if first_hit > first_fail; % only if success comes before failure can you ever recall!
-            recalled(i)=1;
-        end
-    end 
-
-end                
-restudied_2_day_test=mean(mean(recalled(:,1:end-1,2)));
+sampled=sample((S2-S1),rho,O_imm,nSub,nItems,k,'restudy',sampled);
+recalled=recover(R1,rho,O_imm,sampled); 
+restudied_imm_test=mean(mean(recalled(:,1:end-1,2)));restudied_2_day_test=mean(mean(recalled(:,1:end-1,2)));
 
 %% 2-Day delay: Tested
 tested_2_day=[ nan(size(recalled,1),size(recalled,2))  repmat(O_two,1000,1)] ; % initialize 
