@@ -21,4 +21,4 @@ end
 data=[ .70, .81, .54, .42, .75, .68, .56];
 params=[S1 S2 rho R1 R_correct O2 O7];
 %[fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,k,nSub,nItems),params,optimset('MaxFunEvals',2500));
-fit_SAM_RL_Sim(params,data,design,k,nSub,nItems)
+chisquare=fit_SAM_RL_Sim(params,data,design,k,nSub,nItems);
