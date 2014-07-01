@@ -10,8 +10,8 @@ O_imm=1;
 O2=params(6);          
 O7=params(7);
 
-s_strengths = strengths([S1 S2],rho, [O_imm, O2,O7],'sampling', nSub, nItems);
-r_strengths = strengths([R1 R_correct],rho, [O_imm, O2,O7],'recovery', nSub, nItems);
+s_strengths = strengths([S1 S2],rho, [O_imm, O2,O7], nSub, nItems);
+r_strengths = strengths([R1 R_correct],rho, [O_imm, O2,O7], nSub, nItems);
 pred=recall(s_strengths,r_strengths,design,k);
 
 
