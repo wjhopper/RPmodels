@@ -1,4 +1,4 @@
-function  err = fit_SAM_RL_Sim(params,data,design,k,nSub,nItems)
+function  err = fit_SAM_RL_Sim(params,data,design,k,nSub,nItems,varargin)
 %   Detailed explanation goes here
 rng(10); % seed the rng with a constant, so results converge.
 S1=params(1);
@@ -9,7 +9,7 @@ R_correct=params(5);
 O_imm=1;        
 O2=params(6);          
 O7=params(7);
-
+global pred
 s_strengths = strengths([S1 S2],rho, [O_imm, O2,O7], nSub, nItems);
 r_strengths = strengths([R1 R_correct],rho, [O_imm, O2,O7], nSub, nItems);
 pred=recall(s_strengths,r_strengths,design,k);
@@ -31,14 +31,18 @@ if R_correct < R1;
    err=1000000;
 end 
 
-h=figure(1);
-set(h,'Position', [100, 100, 800, 500]);
-hold off
-plot([0,1,2,7], data(1:4), 'b--', [0,1,2,7], data([1 5:7]),'b');
-hold on
-plot([0,1,2,7], pred(1:4),'r--', [0,1,2,7], pred([1 5:7]),'r');
-legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','NortheastOutside');
+if (nargin > 6)
+    if  varargin{1}==1
+        h=figure(1);
+        set(h,'Position', [100, 100, 800, 500]);
+        hold off
+        plot([0,1,2,7], data(1:4), 'b--', [0,1,2,7], data([1 5:7]),'b');
+        hold on
+        plot([0,1,2,7], pred(1:4),'r--', [0,1,2,7], pred([1 5:7]),'r');
+        legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','NortheastOutside');
+        end
+end 
 
-
+end
 
 
