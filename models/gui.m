@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 05-Jul-2014 04:19:47
+% Last Modified by GUIDE v2.5 15-Jul-2014 00:33:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -78,69 +78,14 @@ function varargout = gui_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
+function rho_param_Callback(hObject, eventdata, handles)
 
-function S_params_Callback(hObject, eventdata, handles)
-
-S_params= str2double(strsplit(get(handles.S_params,'String'),'\s*,\s*','DelimiterType','RegularExpression'));
-validate(S_params,handles);
-
-% --- Executes during object creation, after setting all properties.
-function S_params_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to S_params (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function R_params_Callback(hObject, eventdata, handles)
-
-R_params= str2double(strsplit(get(handles.R_params,'String'),'\s*,\s*','DelimiterType','RegularExpression'));
-validate(R_params,handles);
-
-% --- Executes during object creation, after setting all properties.
-function R_params_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to R_params (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-function interference_Callback(hObject, eventdata, handles)
-
-O_params= str2double(strsplit(get(handles.interference,'String'),'\s*,\s*','DelimiterType','RegularExpression'));
-validate(O_params,handles)
-
-% --- Executes during object creation, after setting all properties.
-function interference_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to interference (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function rho_Callback(hObject, eventdata, handles)
-
-rho= str2double(get(handles.rho,'String'));
+rho= str2double(get(handles.rho_param,'String'));
 validate(rho,handles,1);
 
 % --- Executes during object creation, after setting all properties.
-function rho_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to rho (see GCBO)
+function rho_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to rho_param (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -153,9 +98,10 @@ end
 
 
 function k_param_Callback(hObject, eventdata, handles)
-
-k= str2double(get(handles.k_param,'String'));
-validate(k,handles,1);
+valid=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -172,15 +118,14 @@ end
 
 
 
-function nSubs_Callback(hObject, eventdata, handles)
-
-nSubs= str2double(get(handles.nSubs,'String'));
-validate(nSubs,handles,1);
-
-
+function nSubs_param_Callback(hObject, eventdata, handles)
+valid=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
 % --- Executes during object creation, after setting all properties.
-function nSubs_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to nSubs (see GCBO)
+function nSubs_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to nSubs_param (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -192,20 +137,16 @@ end
 
 
 
-function nItems_Callback(hObject, eventdata, handles)
-% hObject    handle to nItems (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of nItems as text
-%        str2double(get(hObject,'String')) returns contents of nItems as a double
-nItems= str2double(get(handles.nItems,'String'));
-validate(nItems,handles,1);
+function nItems_param_Callback(hObject, eventdata, handles)
+valid=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
 
 
 % --- Executes during object creation, after setting all properties.
-function nItems_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to nItems (see GCBO)
+function nItems_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to nItems_param (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -217,8 +158,14 @@ end
 
 function nAttempts_Callback(hObject, eventdata, handles)
 
-[valid, nPractice_tests] =validate(hObject,handles);
+[valid, nPractice_tests] =validate(hObject,handles,1);
 if valid
+    prac=(1:nPractice_tests)-1;
+    prac=num2str(prac(:))';
+    sep=repmat(',',1,length(prac));
+    tests =reshape(reshape([prac(:),sep(:)],2*size(prac,1),[])',1,[]); 
+    tests(end)=[];
+    set(handles.nPractice_Tests,'String',tests);
     make_data(handles)
 else
     uicontrol(hObject)
@@ -290,12 +237,20 @@ function run_button_Callback(hObject, eventdata, handles,fit,S_params,R_params,O
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% quit
+h=findobj('-regexp','Tag','\w*_param');
+p=get(h,'Tag');
+v=get(h,'String');
+h=findobj('-regexp','Tag','\w*_fix');
+f=get(h,'Value');
+params={p v f};
+
+
 if strcmpi(fit,'fit')
     [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,k,nSub,nItems),params,fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
 elseif strcmp(fit,'check')
     chisquare=fit_SAM_RL_Sim(params,data,design,k,nSub,nItems,plotting) %#ok<NASGU,NOPRT>
 end 
+%quit
 
 function [valid,value] =validate(hObject,handles,len)
 valid=false;
@@ -342,6 +297,236 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+% --- Executes when entered data in editable cell(s) in data_table.
+function data_table_CellEditCallback(hObject, eventdata, handles)
+% hObject    handle to data_table (see GCBO)
+% eventdata  structure with the following fields (see UITABLE)
+%	Indices: row and column indices of the cell(s) edited
+%	PreviousData: previous data for the cell(s) edited
+%	EditData: string(s) entered by the user
+%	NewData: EditData or its converted form set on the Data property. Empty if Data was not changed
+%	Error: error string when failed to convert EditData to appropriate value for Data
+% handles    structure with handles and user data (see GUIDATA)
+      % Transform subscipts of selected cell into idx
+      data=get(hObject,'Data');      
+      if eventdata.PreviousData=='S'
+          data{eventdata.Indices(1),eventdata.Indices(2)}=eventdata.PreviousData;
+          set(hObject,'Data',data);
+      end
+
+
+% --- Executes on button press in S2_fix.
+function S2_fix_Callback(hObject, eventdata, handles)
+% hObject    handle to S2_fix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of S2_fix
+
+
+
+function S2_param_Callback(hObject, eventdata, handles)
+% hObject    handle to S2_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of S2_param as text
+%        str2double(get(hObject,'String')) returns contents of S2_param as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function S2_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to S2_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function S1_param_Callback(hObject, eventdata, handles)
+% hObject    handle to S1_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of S1_param as text
+%        str2double(get(hObject,'String')) returns contents of S1_param as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function S1_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to S1_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in S1_fix.
+function S1_fix_Callback(hObject, eventdata, handles)
+% hObject    handle to S1_fix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of S1_fix
+
+
+% --- Executes on button press in S_add.
+function S_add_Callback(hObject, eventdata, handles)
+% hObject    handle to S_add (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in R_add.
+function R_add_Callback(hObject, eventdata, handles)
+% hObject    handle to R_add (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in Rcor_fix.
+function Rcor_fix_Callback(hObject, eventdata, handles)
+% hObject    handle to Rcor_fix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of Rcor_fix
+
+
+
+function Rcor_param_Callback(hObject, eventdata, handles)
+% hObject    handle to Rcor_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of Rcor_param as text
+%        str2double(get(hObject,'String')) returns contents of Rcor_param as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function Rcor_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to Rcor_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function R_param_Callback(hObject, eventdata, handles)
+% hObject    handle to R_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of R_param as text
+%        str2double(get(hObject,'String')) returns contents of R_param as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function R_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to R_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in R_fix.
+function R_fix_Callback(hObject, eventdata, handles)
+% hObject    handle to R_fix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of R_fix
+
+
+% --- Executes on button press in O_add.
+function O_add_Callback(hObject, eventdata, handles)
+% hObject    handle to O_add (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in O2_fix.
+function O2_fix_Callback(hObject, eventdata, handles)
+% hObject    handle to O2_fix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of O2_fix
+
+
+
+function O2_param_Callback(hObject, eventdata, handles)
+[valid, O2]=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
+
+if 02 < str2double(get(handles.O1_param,'String'));
+    set(hObject,'String',get(handles.O1_param,'String'))
+end
+
+% --- Executes during object creation, after setting all properties.
+function O2_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to O2_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function O1_param_Callback(hObject, eventdata, handles)
+[valid, O1]=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
+
+if 01 > str2double(get(handles.O2_param,'String'));
+    set(handles.O2_param,'String',num2str(O1))
+end
+% --- Executes during object creation, after setting all properties.
+function O1_param_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to O1_param (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in O1_fix.
+function O1_fix_Callback(hObject, eventdata, handles)
+% hObject    handle to O1_fix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of O1_fix
 function make_data(handles)
 [v1 , nAttempts] = validate(handles.nAttempts,handles,1);
 [v2 , nPractice_Tests]  = validate(handles.nPractice_Tests,handles);
@@ -360,8 +545,19 @@ if v1 && v2 && v3
         data((y):(y+size(x,1)-1),:)=x;
         y=find(data=='x',1);
     end
-    data=[repmat('S',size(data,1),1) data ];
+    data=[ repmat('S',size(data,1),1) data repmat('T',size(data,1),nFinal_tests) ];
     data=reshape(cellstr(data(:)),size(data,1),size(data,2));
     set(handles.data_table,'Data',data);
+    set(handles.data_table,'ColumnName',[repmat({'Practice'},1,nAttempts),repmat({'Final'},1,nFinal_tests)]);
+    rows=1:size(data,1);
+    set(handles.data_table,'RowName',cellstr([repmat('Cond. ',size(data,1),1) (num2str(rows(:))) ])' );
 
 end
+
+% --- Executes on button press in rho_fix.
+function rho_fix_Callback(hObject, eventdata, handles)
+% hObject    handle to rho_fix (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of rho_fix
