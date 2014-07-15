@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 15-Jul-2014 00:33:17
+% Last Modified by GUIDE v2.5 15-Jul-2014 16:45:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -51,12 +51,31 @@ function gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to gui (see VARARGIN)
-data=cell(['']);
+
 if exist([pwd,'\starting_params.mat'],'file')
-   p = open([pwd,'\starting_params.mat']);
+   p=open([pwd,'\starting_params.mat']);
+   params=[fieldnames(p) struct2cell(p)];
+   for i=1:size(params,1)
+       if isa(params{i,2},'double');
+          if length(params{i,2})> 1
+              val=num2str(params{i,2});
+              val= regexprep(val,'[^\w'']','');
+              sep=repmat(',',1,length(val));
+              val =reshape(reshape([val(:),sep(:)],2*size(val,1),[])',1,[]); 
+              val(end)=[];
+              set_cmd = strcat('set(handles.', params{i,1}, ',''String'',''', val,''')');
+          else
+             set_cmd = strcat('set(handles.', params{i,1}, ',''String'', [', num2str(params{i,2}),'])');
+          end
+       end
+       eval(set_cmd);
+   end    
+   make_data(handles,1);
+  set(handles.data_table,'Data',p.data_table);
+else
+ set(handles.data_table,'Data',cell(''));
 end
-
-
+assignin('base','defaults',p);
 % Choose default command line output for gui
 handles.output = hObject;
 
@@ -79,9 +98,11 @@ varargout{1} = handles.output;
 
 
 function rho_param_Callback(hObject, eventdata, handles)
+valid=validate(hObject,handles,1);
+if ~valid
+    uicontrol(hObject);
+end
 
-rho= str2double(get(handles.rho_param,'String'));
-validate(rho,handles,1);
 
 % --- Executes during object creation, after setting all properties.
 function rho_param_CreateFcn(hObject, eventdata, handles)
@@ -94,7 +115,6 @@ function rho_param_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 
 function k_param_Callback(hObject, eventdata, handles)
@@ -115,7 +135,6 @@ function k_param_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 
 function nSubs_param_Callback(hObject, eventdata, handles)
@@ -157,16 +176,15 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 function nAttempts_Callback(hObject, eventdata, handles)
-
-[valid, nPractice_tests] =validate(hObject,handles,1);
-if valid
-    prac=(1:nPractice_tests)-1;
+[valid, nAttempts] =validate(hObject,handles,1);
+if valid && nAttempts ~= evalin('base','defaults.nAttempts')
+    prac=(1:nAttempts)-1;
     prac=num2str(prac(:))';
     sep=repmat(',',1,length(prac));
     tests =reshape(reshape([prac(:),sep(:)],2*size(prac,1),[])',1,[]); 
     tests(end)=[];
     set(handles.nPractice_Tests,'String',tests);
-    make_data(handles)
+    make_data(handles,1)
 else
     uicontrol(hObject)
 end
@@ -188,11 +206,11 @@ end
 function nPractice_Tests_Callback(hObject, eventdata, handles)
 % nPractice_Tests= str2double(strsplit(get(handles.nPractice_Tests,'String'),'\s*,\s*','DelimiterType','RegularExpression'));
 [valid, nPractice_tests] =validate(hObject,handles);
-if valid
+if valid && any(nPractice_tests ~= evalin('base','defaults.nPractice_Tests'))
     if max(nPractice_tests) < str2double(get(handles.nAttempts,'String'))
         set(handles.nAttempts,'String',num2str(max(nPractice_tests)+1));
     end    
-make_data(handles)
+make_data(handles,1)
 else
     uicontrol(hObject)
 end
@@ -209,47 +227,80 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-% --------------------------------------------------------------------
-function fit_panel_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to fit_panel (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% --- Executes when selected object is changed in fit_panel.
-
-function fit_panel_SelectionChangeFcn(hObject, eventdata, handles)
-% hObject    handle to the selected object in fit_panel 
-% eventdata  structure with the following fields (see UIBUTTONGROUP)
-%	EventName: string 'SelectionChanged' (read only)
-%	OldValue: handle of the previously selected object or empty if none was selected
-%	NewValue: handle of the currently selected object
-% handles    structure with handles and user data (see GUIDATA)
-button=get(eventdata.NewValue,'Tag');
-switch button
-    case fit_fmin
-    fit='fit';
-    case check
-    fit='check';
-end    
-
 % --- Executes on button press in run_button.
-function run_button_Callback(hObject, eventdata, handles,fit,S_params,R_params,O_params,data,design,k,nSub,nItems,varargin)
+function run_button_Callback(hObject, eventdata, handles,varargin)
 % hObject    handle to run_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 h=findobj('-regexp','Tag','\w*_param');
 p=get(h,'Tag');
-v=get(h,'String');
-h=findobj('-regexp','Tag','\w*_fix');
-f=get(h,'Value');
-params={p v f};
+v=cellfun(@str2double,get(h,'String'),'uni',false);
+f=[ {1,1,1}'; get(findobj('-regexp','Tag','\w*_fix'),'Value') ];
+param_list={p{:} ;v{:} ;f{:}}';
+free_params=param_list([param_list{:,3}]==0,1:2);
+fix_params=param_list([param_list{:,3}]==1,1:2);
 
+design=make_data(handles,0);
+data = get(handles.data_table,'Data');
+data=reshape(data',1,[]);
+data=data(cellfun(@isnumeric,data));
+data=[data{:}];
+assignin('base','data',data);
 
+plotting=strrep(get(get(handles.plots_panel,'SelectedObject'),'Tag'),'plots_','');
+if strcmpi(plotting,'iter')  
+    fmin_opts=optimset('MaxFunEvals',2500,'OutputFcn', @iter_output);
+    plotting=1;
+elseif strcmp(plotting,'final')
+    fmin_opts=optimset('MaxFunEvals',2500,'OutputFcn', @final_output);
+    plotting=1;
+elseif strcmp(plotting,'off')
+    fmin_opts=optimset('MaxFunEvals',2500);
+    plotting=0;
+end
+
+one_shot=get(get(handles.one_shot,'SelectedObject'),'Tag');
+
+fit=get(get(handles.fit_panel,'SelectedObject'),'Tag');
 if strcmpi(fit,'fit')
-    [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,k,nSub,nItems),params,fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
+    [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params,one_shot),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
 elseif strcmp(fit,'check')
-    chisquare=fit_SAM_RL_Sim(params,data,design,k,nSub,nItems,plotting) %#ok<NASGU,NOPRT>
+    chisquare=fit_SAM_RL_Sim([free_params{:,2}],data,design,fix_params,free_params,one_shot,plotting) %#ok<NASGU,NOPRT>
 end 
+
+% fminsearch's ouput functions
+function stop = iter_output(~,~,state)
+    stop = false;
+    data=evalin('base','data');
+    global pred
+    if any(strcmp(state,{'iter','done'}))
+            h=figure(1);
+            set(h,'Position', [100, 100, 800, 500]);
+            hold off
+            plot([0,1,2,7], data([4 1:3]), 'b--', [0,1,2,7], data(4:7),'b');
+            hold on
+            plot([0,1,2,7], pred([4, 1:3]),'r--', [0,1,2,7], pred(4:7),'r');
+            legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','NortheastOutside');
+    end
+
+
+function stop = final_output(~,~,state)
+    stop = false;
+    data=evalin('base','data');
+    global pred
+    if strcmp(state,'done')
+            h=figure(1);
+            set(h,'Position', [100, 100, 800, 500]);
+            hold off
+            plot([0,1,2,7], data([4 1:3]), 'b--', [0,1,2,7], data(4:7),'b');
+            hold on
+            plot([0,1,2,7], pred([4, 1:3]),'r--', [0,1,2,7], pred(4:7),'r');
+            legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','NortheastOutside');
+            a=1;
+    end
+
+
 %quit
 
 function [valid,value] =validate(hObject,handles,len)
@@ -279,8 +330,8 @@ end
 function nFinal_tests_Callback(hObject, eventdata, handles)
 
 [valid, nPractice_tests] =validate(hObject,handles);
-if valid
-make_data(handles)
+if valid && nPractice_tests ~= evalin('base','defaults.nFinal_tests')
+make_data(handles,1)
 else
     uicontrol(hObject)
 end
@@ -314,24 +365,16 @@ function data_table_CellEditCallback(hObject, eventdata, handles)
           set(hObject,'Data',data);
       end
 
-
-% --- Executes on button press in S2_fix.
-function S2_fix_Callback(hObject, eventdata, handles)
-% hObject    handle to S2_fix (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of S2_fix
-
-
-
+      
 function S2_param_Callback(hObject, eventdata, handles)
-% hObject    handle to S2_param (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+[valid, S2]=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
 
-% Hints: get(hObject,'String') returns contents of S2_param as text
-%        str2double(get(hObject,'String')) returns contents of S2_param as a double
+if S2 < str2double(get(handles.S1_param,'String'));
+    set(hObject,'String',get(handles.S1_param,'String'))
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -349,12 +392,14 @@ end
 
 
 function S1_param_Callback(hObject, eventdata, handles)
-% hObject    handle to S1_param (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+[valid, S1]=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
 
-% Hints: get(hObject,'String') returns contents of S1_param as text
-%        str2double(get(hObject,'String')) returns contents of S1_param as a double
+if S1 > str2double(get(handles.S2_param,'String'));
+    set(handles.S2_param,'String',num2str(S1))
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -368,15 +413,6 @@ function S1_param_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-% --- Executes on button press in S1_fix.
-function S1_fix_Callback(hObject, eventdata, handles)
-% hObject    handle to S1_fix (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of S1_fix
 
 
 % --- Executes on button press in S_add.
@@ -393,24 +429,15 @@ function R_add_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in Rcor_fix.
-function Rcor_fix_Callback(hObject, eventdata, handles)
-% hObject    handle to Rcor_fix (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of Rcor_fix
-
-
-
 function Rcor_param_Callback(hObject, eventdata, handles)
-% hObject    handle to Rcor_param (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+[valid, Rcor]=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
 
-% Hints: get(hObject,'String') returns contents of Rcor_param as text
-%        str2double(get(hObject,'String')) returns contents of Rcor_param as a double
-
+if Rcor < str2double(get(handles.R_param,'String'));
+    set(hObject,'String',get(handles.Rcor_param,'String'))
+end
 
 % --- Executes during object creation, after setting all properties.
 function Rcor_param_CreateFcn(hObject, eventdata, handles)
@@ -427,13 +454,14 @@ end
 
 
 function R_param_Callback(hObject, eventdata, handles)
-% hObject    handle to R_param (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+[valid, R]=validate(hObject,handles,1);
+if ~valid
+   uicontrol(hObject)
+end
 
-% Hints: get(hObject,'String') returns contents of R_param as text
-%        str2double(get(hObject,'String')) returns contents of R_param as a double
-
+if R > str2double(get(handles.Rcor_param,'String'));
+    set(handles.Rcor_param,'String',num2str(R))
+end
 
 % --- Executes during object creation, after setting all properties.
 function R_param_CreateFcn(hObject, eventdata, handles)
@@ -448,30 +476,11 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in R_fix.
-function R_fix_Callback(hObject, eventdata, handles)
-% hObject    handle to R_fix (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of R_fix
-
-
 % --- Executes on button press in O_add.
 function O_add_Callback(hObject, eventdata, handles)
 % hObject    handle to O_add (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in O2_fix.
-function O2_fix_Callback(hObject, eventdata, handles)
-% hObject    handle to O2_fix (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of O2_fix
-
 
 
 function O2_param_Callback(hObject, eventdata, handles)
@@ -480,7 +489,7 @@ if ~valid
    uicontrol(hObject)
 end
 
-if 02 < str2double(get(handles.O1_param,'String'));
+if O2 < str2double(get(handles.O1_param,'String'));
     set(hObject,'String',get(handles.O1_param,'String'))
 end
 
@@ -497,7 +506,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
 function O1_param_Callback(hObject, eventdata, handles)
 [valid, O1]=validate(hObject,handles,1);
 if ~valid
@@ -507,6 +515,8 @@ end
 if 01 > str2double(get(handles.O2_param,'String'));
     set(handles.O2_param,'String',num2str(O1))
 end
+
+
 % --- Executes during object creation, after setting all properties.
 function O1_param_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to O1_param (see GCBO)
@@ -520,14 +530,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in O1_fix.
-function O1_fix_Callback(hObject, eventdata, handles)
-% hObject    handle to O1_fix (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
 % Hint: get(hObject,'Value') returns toggle state of O1_fix
-function make_data(handles)
+function [design] = make_data(handles,fill)
 [v1 , nAttempts] = validate(handles.nAttempts,handles,1);
 [v2 , nPractice_Tests]  = validate(handles.nPractice_Tests,handles);
 [v3 , nFinal_tests] = validate(handles.nFinal_tests,handles,1);
@@ -538,6 +542,7 @@ if v1 && v2 && v3
     design(:,2)=regexprep(design(:,2),'\d*','T');
     design(:,1)=regexprep(design(:,1),'\d*','S');
     design= regexprep(design,'[^\w'']','');
+if fill==1
     data=repmat(char('x'),sum(2.^(nAttempts-1)),nAttempts-1);
     y=1;
     for i=1:size(design,1)
@@ -551,13 +556,25 @@ if v1 && v2 && v3
     set(handles.data_table,'ColumnName',[repmat({'Practice'},1,nAttempts),repmat({'Final'},1,nFinal_tests)]);
     rows=1:size(data,1);
     set(handles.data_table,'RowName',cellstr([repmat('Cond. ',size(data,1),1) (num2str(rows(:))) ])' );
-
+end
+design(cellfun(@(x) strcmp(x,''),design)) =[];
+design=[{'S','S'}' design(:)];
 end
 
-% --- Executes on button press in rho_fix.
-function rho_fix_Callback(hObject, eventdata, handles)
-% hObject    handle to rho_fix (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
+function fit_panel_SelectionChangeFcn(hObject, eventdata, handles)
+% hObject    handle to the selected object in uipanel1 
+% eventdata  structure with the following fields (see UIBUTTONGROUP)
+%	EventName: string 'SelectionChanged' (read only)
+%	OldValue: handle of the previously selected object or empty
+%	NewValue: handle of the currently selected object
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of rho_fix
+switch get(eventdata.NewValue,'Tag') % Get Tag of selected object.
+    case 'radiobutton1'
+        display('Radio button 1');
+    case 'radiobutton2'
+        display('Radio button 2');
+    case 'togglebutton1'
+        display('Toggle button 1');
+    case 'togglebutton2'
+        display('Toggle button 2');
+end

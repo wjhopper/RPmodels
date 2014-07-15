@@ -9,7 +9,7 @@ switch nargin
 end    
 global pred
 
-% Free Parameters
+% Free Parameters54
 S1=.004743; % mean of sampling strength distribution after initial study
 S2=.021532; % mean of sampling strength distribution after study practice & correct recall
 rho=0;   % scaling paramter to get SD of sampling distribution
@@ -29,12 +29,13 @@ if any(cn==1)
 end
 
 
-% data=[acc on recall practice, acc on 5 min test after study,  acc on 2 day test after study,
-% acc on 1 week test after study, acc on 5 min test after recall practice,
-% acc on 2 day test after recall practice, acc on 1 week test after recall practice] 
-data=[ .70, .81, .54, .42, .75, .68, .56];
+% data=[acc on 5 min test after study,  acc on 2 day test after study,  acc on 1 week test after study, 
+%       acc on recall practice,  acc on 5 min test after recall practice,
+%       acc on 2 day test after recall practice, acc on 1 week test after recall practice] 
+data=[ .81, .54, .42, .70,  .75, .68, .56];
 params=[S1 S2 rho R1 R_correct O2 O7];
 
+one_shot=1;
 % Set plotting behavior
 if strcmpi(plotting,'iter')  
     fmin_opts=optimset('MaxFunEvals',2500,'OutputFcn', @iter_output);
@@ -52,9 +53,9 @@ end
 % set simulation to find best fitting params, or to use starting params and
 % quit
 if strcmpi(fit,'fit')
-    [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,k,nSub,nItems),params,fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
+    [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,k,nSub,nItems,one_shot),params,fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
 elseif strcmp(fit,'check')
-    chisquare=fit_SAM_RL_Sim(params,data,design,k,nSub,nItems,plotting) %#ok<NASGU,NOPRT>
+    chisquare=fit_SAM_RL_Sim(params,data,design,k,nSub,nItems,one_shot,plotting) %#ok<NASGU,NOPRT>
 else
     error('SAM_RL_Sim:input_args', 'Invalid input argument. ''fit'' must be equal to ''fit'' or ''check''')
 end 

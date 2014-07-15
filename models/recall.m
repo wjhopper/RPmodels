@@ -1,4 +1,4 @@
-function [rec] = recall(S,R,design,k)
+function [rec] = recall(S,R,design,k,one_shot)
 % determine final test performance, given study/test practice performance
 
 [~,Scn]=find(strcmp(design,'S')); % find study practices
@@ -39,7 +39,6 @@ S_tmp=mnrnd(k,S_tmp); % Take k shots at sampling an item
 S_tmp(S_tmp>=1)=1; % Score as success(1)/failure (0)
 S_tmp=ipermute(reshape(S_tmp,tmp_size),[1 3 4 2]); % put things back into an array 
 
-% R2=zeros(size(S_tmp),'single');
 R_tmp(S_tmp~=1)=0;
 study_perf=binornd(1,R_tmp);
 SS=mean(squeeze(mean(study_perf(:,end-1,:,:),2)));
@@ -72,7 +71,9 @@ R_tmp(repmat(practice_perf(:,:,:,1),[1 1 1 size(R,4)]))=R_success(repmat(practic
 R_tmp(repmat(~practice_perf(:,:,:,1),[1 1 1 size(R,4)]))=R_fail(repmat(~practice_perf(:,:,:,1),[1 1 1 size(R,4)]));
 % for T0 (1st page in 4th dimension), if recovery on practice test failed,
 % set recovery strength to 0
-R_tmp(no_recovery(:,1:end-1,1,1))=0;
+if one_shot
+    R_tmp(no_recovery(:,1:end-1,1,1))=0;
+end
 R_tmp=R_tmp./(R_tmp+repmat(R_tmp(:,end,:,:),[1,size(R_tmp,2),1,1]));% find recovery probability for each item (luce choice rule)
 
 S_tmp=permute(S_tmp,[1 3 4 2]); % Rearrange array dimensions (because reshape goes down columns, and you need to move the dimension you need to concatenate along to the second dimension
@@ -87,4 +88,4 @@ R_tmp(S_tmp~=1)=0; % if sampling failed, can't recover the item
 test_perf=binornd(1,R_tmp);
 ST=mean(squeeze(mean(test_perf(:,1:end-1,:,:),2)));
 
-rec=[practice(1) SS ST];
+rec=[ SS practice(1) ST];
