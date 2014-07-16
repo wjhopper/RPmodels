@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 15-Jul-2014 16:45:19
+% Last Modified by GUIDE v2.5 16-Jul-2014 15:45:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -51,7 +51,6 @@ end
     % eventdata  reserved - to be defined in a future version of MATLAB
     % handles    structure with handles and user data (see GUIDATA)
     % varargin   command line arguments to gui (see VARARGIN)
-
     if exist([pwd,'\starting_params.mat'],'file')
        p=open([pwd,'\starting_params.mat']);
        params=[fieldnames(p) struct2cell(p)];
@@ -155,7 +154,7 @@ end
             prac=(1:nAttempts)-1;
             prac=num2str(prac(:))';
             sep=repmat(',',1,length(prac));
-            tests =reshape(reshape([prac(:),sep(:)],2*size(prac,1),[])',1,[]); 
+            tests =reshape(reshape([prac ; sep],2*size(prac,2),[])',1,[]); 
             tests(end)=[];
             set(handles.nPractice_Tests,'String',tests);
             make_data(handles,1)
@@ -187,34 +186,36 @@ end
 
 
     function run_button_Callback(hObject, eventdata, handles,varargin)
-        h=findobj('-regexp','Tag','\w*_param');
-        p=get(h,'Tag');
-        v=cellfun(@str2double,get(h,'String'),'uni',false);
-        f=[ {1,1,1}'; get(findobj('-regexp','Tag','\w*_fix'),'Value') ];
-        param_list={p{:} ;v{:} ;f{:}}';
-        free_params=param_list([param_list{:,3}]==0,1:2);
-        fix_params=param_list([param_list{:,3}]==1,1:2);
-
-        design=make_data(handles,0);
-        data = get(handles.data_table,'Data');
-        data=reshape(data',1,[]);
-        data=data(cellfun(@isnumeric,data));
-        data=[data{:}];
-
-        plotting=strrep(get(get(handles.plots_panel,'SelectedObject'),'Tag'),'plots_','');
-        one_shot=get(get(handles.one_shot,'SelectedObject'),'Tag');
-        fit=get(get(handles.fit_panel,'SelectedObject'),'Tag');
-
-        if strcmpi(fit,'fit')
-            fmin_opts=optimset('MaxFunEvals',2500,'OutputFcn', @output);
-            [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params,one_shot,plotting),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
-            % save best fitting params in default struct!!
-
-            fit_SAM_RL_Sim(fitted_params,data,design,fix_params,free_params,one_shot,'iter') 
-        elseif strcmp(fit,'check') && any(strcmp(plotting,{'iter','final'}))
-            chisquare=fit_SAM_RL_Sim([free_params{:,2}],data,design,fix_params,free_params,one_shot,'iter') %#ok<NASGU,NOPRT>
-
-        end
+        SAM_RL_Sim(hObject, handles)
+%         h=findobj('-regexp','Tag','\w*_param');
+%         p=get(h,'Tag');
+%         v=cellfun(@str2double,get(h,'String'),'uni',false);
+%         f=[ {1,1,1}'; get(findobj('-regexp','Tag','\w*_fix'),'Value') ];
+%         param_list={p{:} ;v{:} ;f{:}}';
+%         param_list=strrep(param_list,'_param','');
+%         free_params=param_list([param_list{:,3}]==0,1:2); 
+%         fix_params=param_list([param_list{:,3}]==1,1:2);
+% 
+%         design=make_data(handles,0);
+%         data = get(handles.data_table,'Data');
+%         data=reshape(data',1,[]);
+%         data=data(cellfun(@isnumeric,data));
+%         data=[data{:}];
+% 
+%         plotting=strrep(get(get(handles.plots_panel,'SelectedObject'),'Tag'),'plots_',''); 
+%         one_shot=get(get(handles.one_shot,'SelectedObject'),'Tag');
+%         fit=get(get(handles.fit_panel,'SelectedObject'),'Tag');
+% 
+%         if strcmpi(fit,'fit')
+%             fmin_opts=optimset('MaxFunEvals',2500,'OutputFcn', @output);
+%             [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params,one_shot,plotting),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
+%             % save best fitting params in default struct!!
+% 
+%             fit_SAM_RL_Sim(fitted_params,data,design,fix_params,free_params,one_shot,'iter') 
+%         elseif strcmp(fit,'check') && any(strcmp(plotting,{'iter','final'}))
+%             chisquare=fit_SAM_RL_Sim([free_params{:,2}],data,design,fix_params,free_params,one_shot,'iter') %#ok<NASGU,NOPRT>
+% 
+%         end
 
         %quit
    
@@ -232,9 +233,6 @@ end
     function [valid,value] =validate(hObject,handles,len)
         valid=false;
         x=str2double(strsplit(get(hObject,'String'),'\s*,\s*','DelimiterType','RegularExpression'));
-        % 
-        % handles_cell=[fieldnames(handles) struct2cell(handles)];
-        % x = handles_cell{[handles_cell{:,2}]'==hObject,1}
 
         if any(isnan(x)) || any(~isreal(x)) || (exist('len','var') && ~isequal(length(x),len))
             set(handles.run_button,'String','Bad Params')
@@ -247,6 +245,11 @@ end
             set(handles.run_button,'Enable','on')
             set(handles.run_button,'BackgroundColor','g')
             set(hObject,'BackgroundColor','w')
+            tag=get(hObject,'Tag');
+            y=evalin('base',['defaults.' tag]);
+            if isequal(x,y) && strcmp(get(handles.restore,'Visible'),'off') && exist([pwd,'\starting_params.mat'],'file')==2
+              set(handles.restore,'Visible','on')
+            end    
             valid=true;
             value=x;
         end
@@ -393,7 +396,7 @@ end
             set(hObject,'BackgroundColor','white');
          end
 
-    function [design] = make_data(handles,fill)
+    function [design,data] = make_data(handles,fill)
         [v1 , nAttempts] = validate(handles.nAttempts,handles,1);
         [v2 , nPractice_Tests]  = validate(handles.nPractice_Tests,handles);
         [v3 , nFinal_tests] = validate(handles.nFinal_tests,handles,1);
@@ -404,7 +407,6 @@ end
             design(:,2)=regexprep(design(:,2),'\d*','T');
             design(:,1)=regexprep(design(:,1),'\d*','S');
             design= regexprep(design,'[^\w'']','');
-        if fill==1
             data=repmat(char('x'),sum(2.^(nAttempts-1)),nAttempts-1);
             y=1;
             for i=1:size(design,1)
@@ -412,16 +414,19 @@ end
                 data((y):(y+size(x,1)-1),:)=x;
                 y=find(data=='x',1);
             end
-            data=[ repmat('S',size(data,1),1) data repmat('T',size(data,1),nFinal_tests) ];
+%             design(cellfun(@(x) strcmp(x,''),design))=[];
+            design=[ repmat('S',size(data,1),1) data ];
+            data=[design repmat('T',size(data,1),nFinal_tests) ];
+            design=reshape(cellstr(design(:)),size(design,1),size(design,2));
             data=reshape(cellstr(data(:)),size(data,1),size(data,2));
-            set(handles.data_table,'Data',data);
-            set(handles.data_table,'ColumnName',[repmat({'Practice'},1,nAttempts),repmat({'Final'},1,nFinal_tests)]);
-            rows=1:size(data,1);
-            set(handles.data_table,'RowName',cellstr([repmat('Cond. ',size(data,1),1) (num2str(rows(:))) ])' );
+            if fill==1
+                set(handles.data_table,'Data',data);
+                set(handles.data_table,'ColumnName',[repmat({'Practice'},1,nAttempts),repmat({'Final'},1,nFinal_tests)]);
+                rows=1:size(data,1);
+                set(handles.data_table,'RowName',cellstr([repmat('Cond. ',size(data,1),1) (num2str(rows(:))) ])' );
+            end
         end
-        design(cellfun(@(x) strcmp(x,''),design)) =[];
-        design=[{'S','S'}' design(:)];
-        end
+ 
 
 
     function fit_panel_SelectionChangeFcn(hObject, eventdata, handles)
@@ -442,3 +447,10 @@ end
                 display('Toggle button 2');
         end
 
+
+% --- Executes on button press in restore.
+function restore_Callback(hObject, eventdata, handles)
+    gui_OpeningFcn(handles.figure1,[],handles);
+% hObject    handle to restore (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

@@ -2,20 +2,20 @@ function  err = fit_SAM_RL_Sim(params,data,design,fix_params,free_params,one_sho
 %   Detailed explanation goes here
 rng(10); % seed the rng with a constant, so results converge.
 
-S1=params(strcmp(free_params(:,1),'S1_param'));
-S2=params(strcmp(free_params(:,1),'S2_param'));
-R1=params(strcmp(free_params(:,1),'R_param'));
-R_correct=params(strcmp(free_params(:,1),'Rcor_param'));
-O2=params(strcmp(free_params(:,1),'O1_param'));
-O7=params(strcmp(free_params(:,1),'O2_param'));
+S1=params(strcmp(free_params(:,1),'S1'));
+S2=params(strcmp(free_params(:,1),'S2'));
+R1=params(strcmp(free_params(:,1),'R'));
+R_correct=params(strcmp(free_params(:,1),'Rcor'));
+O2=params(strcmp(free_params(:,1),'O1'));
+O7=params(strcmp(free_params(:,1),'O2'));
 if strcmp('rho_param',free_params(:,1))
-    rho=params(strcmp(free_params(:,1),'rho_param'));
+    rho=params(strcmp(free_params(:,1),'rho'));
 else
-    rho=fix_params{strcmp(fix_params(:,1),'rho_param'),2};
+    rho=fix_params{strcmp(fix_params(:,1),'rho'),2};
 end
-k=fix_params{strcmp(fix_params(:,1),'k_param'),2};
-nSub=fix_params{strcmp(fix_params(:,1),'nSubs_param'),2};
-nItems=fix_params{strcmp(fix_params(:,1),'nItems_param'),2};
+k=fix_params{strcmp(fix_params(:,1),'k'),2};
+nSub=fix_params{strcmp(fix_params(:,1),'nSubs'),2};
+nItems=fix_params{strcmp(fix_params(:,1),'nItems'),2};
 O_imm=1;   
 
 if strcmp(one_shot,'on')
