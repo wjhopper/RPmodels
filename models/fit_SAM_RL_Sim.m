@@ -1,4 +1,4 @@
-function  err = fit_SAM_RL_Sim(params,data,design,fix_params,free_params,varargin)
+function  err = fit_SAM_RL_Sim(params,data,design,fix_params,free_params,one_shot,plotting)
 %   Detailed explanation goes here
 rng(10); % seed the rng with a constant, so results converge.
 
@@ -18,13 +18,12 @@ nSub=fix_params{strcmp(fix_params(:,1),'nSubs_param'),2};
 nItems=fix_params{strcmp(fix_params(:,1),'nItems_param'),2};
 O_imm=1;   
 
-if strcmp(varargin{1},'on')
+if strcmp(one_shot,'on')
    one_shot=true;
 else
    one_shot=false;
 end
 
-global pred
 s_strengths = strengths([S1 S2],rho, [O_imm, O2,O7], nSub, nItems);
 r_strengths = strengths([R1 R_correct],rho, [O_imm, O2,O7], nSub, nItems);
 pred=recall(s_strengths,r_strengths,design,k,one_shot);
@@ -46,17 +45,17 @@ if R_correct < R1;
    err=1000000;
 end 
 
-if (nargin == 7)
-    if  varargin{2}==1
-        h=figure(1);
-        set(h,'Position', [100, 100, 800, 500]);
-        hold off
-        plot([0,1,2,7], data([4 1:3]), 'b--', [0,1,2,7], data(4:7),'b');
-        hold on
-        plot([0,1,2,7], pred([4, 1:3]),'r--', [0,1,2,7], pred(4:7),'r');
-        legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','NortheastOutside');
-    end
-end 
+if  strcmp(plotting,'iter')
+    h=figure(1);
+    set(h,'Position', [100, 100, 800, 500]);
+    hold off
+    plot([0,1,2,7], data([4 1:3]), 'b--', [0,1,2,7], data(4:7),'b');
+    hold on
+    plot([0,1,2,7], pred([4, 1:3]),'r--', [0,1,2,7], pred(4:7),'r');
+    legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','NortheastOutside');
+    text('position',[.25,min([data pred])+.02],'string', ['\chi^2{ = }' num2str(err)],'FontWeight','bold');
+end
+
 
 end
 
