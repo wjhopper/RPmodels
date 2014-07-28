@@ -52,8 +52,9 @@ end
     % handles    structure with handles and user data (see GUIDATA)
     % varargin   command line arguments to gui (see VARARGIN)
     if exist([pwd,'\starting_params.mat'],'file')
-       p=open([pwd,'\starting_params.mat']);
-       params=[fieldnames(p) struct2cell(p)];
+       defaults=open([pwd,'\starting_params.mat']);
+       assignin('base','defaults',defaults)
+       params=[fieldnames(defaults) struct2cell(defaults)];
        for i=1:size(params,1)
            if isa(params{i,2},'double');
               if length(params{i,2})> 1
@@ -70,8 +71,8 @@ end
            eval(set_cmd);
        end    
        make_data(handles,1);
-      set(handles.data_table,'Data',p.data_table);
-      assignin('base','defaults',p);
+      set(handles.data_table,'Data',defaults.data_table);
+      assignin('base','defaults',defaults);
     else
      set(handles.data_table,'Data',cell(''));
     end
