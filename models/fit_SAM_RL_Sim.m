@@ -1,4 +1,4 @@
-function  err = fit_SAM_RL_Sim(params,data,design,fix_params,free_params,one_shot,plotting,varargin)
+function  err = fit_SAM_RL_Sim(params,data,design,fix_params,free_params,one_shot,plotting,fit)
 %   Detailed explanation goes here
 rng(10); % seed the rng with a constant, so results converge.
 
@@ -40,19 +40,17 @@ end
 
 if  any(strcmp(plotting,{'iter','final'}))
     h=figure(1);
-    set(h,'Position', [100,50, 1200, 700],'Name','SAM-RL Plots');
+    set(h,'Position', [100,50, 1200, 700],'Name','SAM-RL Plots', 'NumberTitle', 'off');
     hold off
-    if strcmp(plotting,'final') && ~strcmp(varargin{1},'fit');
+    if strcmp(fit,'check') 
             plot([0,1,2,7], data([4 1:3]), 'b--', [0,1,2,7], data(4:7),'b');
             hold on
             plot([0,1,2,7], pred([4, 1:3]),'r--', [0,1,2,7], pred(4:7),'r');
-            legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','NortheastOutside');
+            legend('Study (obs)','Test (obs)','Study (SAM)', 'Test (SAM)','Location','Northeast');
             text('position',[.25,min([data pred])+.02], ...
                  'string', char(['\chi^2{ = }' num2str(err)] ,[ 'One Shot: ' one_shot], [rho_txt num2str(rho)]), ...
                  'FontWeight','bold');
-    elseif strcmp(plotting,'iter')
-%         param_hist=varargin{1};
-%         fval_hist=varargin{2};
+    elseif strcmp(fit,'fit')
         subplot(6,6,[1:3 7:9 13:15], 'Position',[.03 .52 .45 .46])  
             plot([0,1,2,7], data([4 1:3]), 'b--', [0,1,2,7], data(4:7),'b');
             hold on
@@ -61,18 +59,6 @@ if  any(strcmp(plotting,{'iter','final'}))
             text('position',[.25,min([data pred])+.02], ...
                  'string', char(['\chi^2{ = }' num2str(err)] ,[ 'One Shot: ' one_shot], [rho_txt num2str(rho)]), ...
                  'FontWeight','bold');
-%         subplot(6,6,[4:6 10:12 16:18],'Position',[.54 .52 .45 .46])
-%             if ~isempty(param_hist)
-%             hold on
-%             for i=1:(size(param_hist,2)-1)
-%                 plot(param_hist(:,end),param_hist(:,i))
-%             end
-%             hold off
-%             end
-%         subplot(6,6,(19:36),'Position',[.03 .03 .96 .45])
-%             if ~isempty(fval_hist)
-%             plot(fval_hist(:,1),fval_hist(:,2));
-%             end
     end
 end
 
