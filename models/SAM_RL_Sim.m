@@ -23,7 +23,7 @@ if strcmp(stack(1,1).name,mfilename) && size(stack,1)== 1
     O2_param={'O2',4.499,0}; % Extralist interference at 7 day test
     k_param={'k',500,1};
     nItems_param={'nItems',30,1};
-    nSub_param={'nSub',1000,1};
+    nSubs_param={'nSub',1000,1};
     z=[ who('-rexexp','*_param')'; repmat({','},1,numel(who('-rexexp','*_param'))) ];
     z=horzcat(z{1:end-1});
     param_list=eval(['vertcat(',z,')']); clear z;
@@ -76,6 +76,8 @@ end
 
 param_hist=[];
 fval_hist=[];
+set(handles.run_button,'String', 'Working ...');
+set(handles.run_button,'BackgroundColor','r')
 
 if strcmpi(fit,'fit') 
     fmin_opts=optimset('MaxFunEvals',2500,'OutputFcn', @history);      
@@ -91,8 +93,23 @@ if strcmpi(fit,'fit')
 elseif strcmp(fit,'check')
     chisquare=fit_SAM_RL_Sim([free_params{:,2}],data,design,fix_params,free_params(:,1),one_shot,plotting,fit) %#ok<NASGU,NOPRT>
 end
-
-
+if exist('fitted_params','var');
+    file=fullfile(fileparts(which(mfilename)), 'final_params.mat');
+    if exist(file,'file')
+        delete(file);
+    end    
+    free_params(:,2)=num2cell(fitted_params)';
+    param_list=[free_params; fix_params]     %#ok<NOPRT>
+    for j=1:size(param_list,1)
+          eval([param_list{j,1} '_param = ' num2str(param_list{j,2}) ';']);
+          if j==1
+            save(file,[param_list{j,1} '_param']);
+          else
+            save(file,[param_list{j,1} '_param'],'-append');
+          end
+    end
+    set(handles.set_to_final,'Visible','on');
+end
     % fminsearch's ouput functions
     function [stop]= history(x,optimvals,state,varargin)
         stop = false;

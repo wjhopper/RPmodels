@@ -23,7 +23,7 @@ find_rho=param_list(strcmp(param_list(:,1),'rho'),2);
 rho=sort(cell2mat(find_rho))';
 % Find the nSubs parameter value
 find_nSubs=param_list(strcmp(param_list(:,1),'nSubs'),2);
-nSub=sort(cell2mat(find_nSubs))';
+nSubs=sort(cell2mat(find_nSubs))';
 % end
 % Find the k parameter value
 find_k=param_list(strcmp(param_list(:,1),'k'),2);
@@ -41,8 +41,8 @@ else
 end
 
 
-s_strengths = strengths(S_params, rho, O_params, nSub, nItems);
-r_strengths = strengths(R_params, rho, O_params, nSub, nItems);
+s_strengths = strengths(S_params, rho, O_params, nSubs, nItems);
+r_strengths = strengths(R_params, rho, O_params, nSubs, nItems);
 pred=recall(s_strengths,r_strengths,design,k,one_shot_ctrl);
 
 
