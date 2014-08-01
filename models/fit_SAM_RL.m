@@ -28,11 +28,6 @@ nSubs=sort(cell2mat(find_nSubs))';
 % Find the k parameter value
 find_k=param_list(strcmp(param_list(:,1),'k'),2);
 k=sort(cell2mat(find_k))';
-if any(strcmp('rho',free_params(:,1)))
-    rho_txt='Rho free: ';
-else
-    rho_txt='Rho fixed @ ';
-end
 
 if strcmp(one_shot,'on')
    one_shot_ctrl=true;
@@ -40,11 +35,42 @@ else
    one_shot_ctrl=false;
 end
 
+if any(strcmp('rho',free_params(:,1)))
+    rho_txt='Rho free: ';
+    pred=SAM_Sim;
+elseif any(strcmp('rho',fix_params(:,1))) && rho ~= 0
+    rho_txt='Rho fixed @ ';
+    pred=SAM_Sim;
+elseif any(strcmp('rho',fix_params(:,1))) && rho == 0
+     rho_txt='Rho fixed @ ';
+     pred=SAM;
+end
 
-s_strengths = strengths(S_params, rho, O_params, nSubs, nItems);
-r_strengths = strengths(R_params, rho, O_params, nSubs, nItems);
-pred=recall(s_strengths,r_strengths,design,k,one_shot_ctrl);
+    function pred = SAM_Sim
+        s_strengths = strengths(S_params, rho, O_params, nSubs, nItems);
+        r_strengths = strengths(R_params, rho, O_params, nSubs, nItems);
+        pred=recall(s_strengths,r_strengths,design,k,one_shot_ctrl);
+    end
 
+    function pred =  SAM
+        % After initial Study
+        prac=(1-((1-(S_params(1)/( (S_params(1)*30)+ O_params(1) ))) .^k)).*(R_params(1)/(R_params(1)+O_params(1)));
+
+        %Studied Items 
+        study_acc=(1-((1-(S_params(2)./( (S_params(2)*30)+ O_params(1) ))) .^k)).*(R_params(1)./(R_params(1)+O_params));
+        %Tested Items
+        p_sample_test_correct = S_params(2)./( (S_params(2)*prac*nItems) + (S_params(1)*(1-prac)*nItems) + O_params );                            
+        p_sample_test_incorrect = S_params(1)./( (S_params(2)*prac*nItems) + (S_params(1)*(1-prac)*nItems) + O_params );
+        p_recall_test_correct = (1-((1-p_sample_test_correct).^k)).*(R_params(2)./(R_params(2)+O_params));
+        p_recall_test_incorrect_imm=(1-((1-p_sample_test_incorrect)).^k).*(R_params(1)./(R_params(1)+O_params));
+        if one_shot_ctrl
+            test_acc=(p_recall_test_correct*prac) + (p_recall_test_incorrect_imm.*[(1-( 1-((1-(S_params(1)/( (S_params(1)*30)+ O_params(1) ))) .^k)) ) (1-prac) (1-prac)]);
+        else
+            test_acc=(p_recall_test_correct*prac) + (p_recall_test_incorrect_imm.*repmat(1-prac,1,3));
+        end
+            
+        pred=[study_acc prac test_acc];
+    end
 
 %% Check predictions
 Lu=(data.*log(data))+((1-data).*log(1-data));
