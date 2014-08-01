@@ -80,35 +80,39 @@ fval_hist=[];
 if strcmpi(fit,'fit') 
     fmin_opts=optimset('MaxFunEvals',2500,'OutputFcn', @history);      
     if strcmpi(plotting,'iter')    
-        [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params,one_shot,plotting,fit),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
+        [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params(:,1),one_shot,plotting,fit),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
     elseif strcmpi(plotting,'final')
-        [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params,one_shot,'off',fit),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
-        chisquare=fit_SAM_RL_Sim(fitted_params,data,design,fix_params,free_params,one_shot,plotting,fit) %#ok<NASGU,NOPRT>
-        history_plot_final([],[],'done')        
+        [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params(:,1),one_shot,'off',fit),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
+        fit_SAM_RL_Sim(fitted_params,data,design,fix_params,free_params(:,1),one_shot,plotting,fit); %#ok<NASGU>
+        history([],[],'done','final');        
     else
-        [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params,one_shot,'off',fit),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
+        [fitted_params, chisquare, ~ , info]=fminsearch(@(x) fit_SAM_RL_Sim(x,data,design,fix_params,free_params(:,1),one_shot,'off',fit),[free_params{:,2}],fmin_opts) %#ok<NASGU,NOPRT,*ASGLU>
     end    
 elseif strcmp(fit,'check')
-    chisquare=fit_SAM_RL_Sim([free_params{:,2}],data,design,fix_params,free_params,one_shot,plotting,fit) %#ok<NASGU,NOPRT>
+    chisquare=fit_SAM_RL_Sim([free_params{:,2}],data,design,fix_params,free_params(:,1),one_shot,plotting,fit) %#ok<NASGU,NOPRT>
 end
 
 
     % fminsearch's ouput functions
-    function [stop]= history(x,optimvals,state)
+    function [stop]= history(x,optimvals,state,varargin)
         stop = false;
         if any(strcmp(state, {'iter','done'}))
-                param_hist =[param_hist; ([x optimvals.iteration]) ];
-                fval_hist= [ fval_hist;  ([optimvals.fval optimvals.iteration ])];
-                if findobj('type','figure','name','SAM-RL Plots');
-                    subplot(6,6,[4:6 10:12 16:18],'Position',[.54 .52 .45 .46])
-                        hold on
-                        for i=1:(size(param_hist,2)-1)
-                            plot(param_hist(:,end),param_hist(:,i))
-                        end
-                        hold off
-                    subplot(6,6,(19:36),'Position',[.03 .03 .96 .45])
-                        plot(fval_hist(:,2), fval_hist(:,1));
-                end
+            
+            if nargin < 4
+            param_hist =[param_hist; ([x optimvals.iteration]) ];
+            fval_hist= [ fval_hist;  ([optimvals.fval optimvals.iteration ])];
+            end 
+
+            if findobj('type','figure','name','SAM-RL Plots');
+                subplot(6,6,[4:6 10:12 16:18],'Position',[.54 .52 .45 .46])
+                    hold on
+                    for i=1:(size(param_hist,2)-1)
+                        plot(param_hist(:,end),param_hist(:,i))
+                    end
+                    hold off
+                subplot(6,6,(19:36),'Position',[.03 .03 .96 .45])
+                    plot(fval_hist(:,2), fval_hist(:,1));
+            end
         end
     end
 
