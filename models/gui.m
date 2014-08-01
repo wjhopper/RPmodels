@@ -188,9 +188,33 @@ end
 
 
     function run_button_Callback(hObject, eventdata, handles,varargin)
-        SAM_RL_Sim(hObject, handles);
-        set(hObject,'String', 'Run Model');
-        set(hObject,'BackgroundColor','g')
+        set(hObject,'Enable','off');
+        try
+            % R2010a and newer
+            iconsClassName = 'com.mathworks.widgets.BusyAffordance$AffordanceSize';
+            iconsSizeEnums = javaMethod('values',iconsClassName);
+            SIZE_32x32 = iconsSizeEnums(2);  % (1) = 16x16,  (2) = 32x32
+            jObj = com.mathworks.widgets.BusyAffordance(SIZE_32x32, 'Working ...');  % icon, label
+        catch
+            % R2009b and earlier
+            redColor   = java.awt.Color(1,0,0);
+            blackColor = java.awt.Color(0,0,0);
+            jObj = com.mathworks.widgets.BusyAffordance(redColor, blackColor);
+        end
+        jObj.setPaintsWhenStopped(true);  % default = false
+        jObj.useWhiteDots(false);         % default = false (true is good for dark backgrounds)
+        javacomponent(jObj.getComponent, [10,10,80,80], gcf);
+        try
+            jObj.start;
+            SAM_RL(hObject, handles);
+        catch
+            jObj.getComponent.setVisible(false)
+            set(hObject,'Enable','on')
+        end
+        jObj.getComponent.setVisible(false)
+        set(hObject,'Enable','on')
+
+
 
     
     function [valid,value] =validate(hObject,handles,len)
