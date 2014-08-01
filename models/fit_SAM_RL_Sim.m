@@ -1,32 +1,48 @@
 function  err = fit_SAM_RL_Sim(params,data,design,fix_params,free_params,one_shot,plotting,fit)
 %   Detailed explanation goes here
 rng(10); % seed the rng with a constant, so results converge.
-
-S1=params(strcmp(free_params(:,1),'S1'));
-S2=params(strcmp(free_params(:,1),'S2'));
-R1=params(strcmp(free_params(:,1),'R'));
-R_correct=params(strcmp(free_params(:,1),'Rcor'));
-O2=params(strcmp(free_params(:,1),'O1'));
-O7=params(strcmp(free_params(:,1),'O2'));
+% change values in free_params table with the updated ones from fminseach, and
+% cat them together with the fix_params
+param_list=[[free_params num2cell(params')]; fix_params(:,1:2)];
+% Find all the S parameter values, and put them in a low-high sorted vector
+find_S=param_list(~cellfun(@isempty,regexp(param_list(:,1),'S\d')),2);
+S_params=sort(cell2mat(find_S))';
+% Find all the R parameter values, and put them in a low-high sorted vector
+find_R=param_list(~cellfun(@isempty,regexp(param_list(:,1),'R\w*')),2);
+R_params=sort(cell2mat(find_R))';
+% Find all the O parameter values, and put them in a low-high sorted vector
+find_O=param_list(~cellfun(@isempty,regexp(param_list(:,1),'O\d')),2);
+O_imm=1; 
+O_params=[O_imm sort(cell2mat(find_O))'];
+% Find the nItems parameter value
+find_nItems=param_list(strcmp(param_list(:,1),'nItems'),2);
+nItems=sort(cell2mat(find_nItems))';
+% if sim
+% Find the rho parameter value
+find_rho=param_list(strcmp(param_list(:,1),'rho'),2);
+rho=sort(cell2mat(find_rho))';
+% Find the nSubs parameter value
+find_nSubs=param_list(strcmp(param_list(:,1),'nSubs'),2);
+nSub=sort(cell2mat(find_nSubs))';
+% end
+% Find the k parameter value
+find_k=param_list(strcmp(param_list(:,1),'k'),2);
+k=sort(cell2mat(find_k))';
 if any(strcmp('rho',free_params(:,1)))
-    rho=params(strcmp(free_params(:,1),'rho'));
     rho_txt='Rho free: ';
 else
-    rho=fix_params{strcmp(fix_params(:,1),'rho'),2};
     rho_txt='Rho fixed @ ';
 end
-k=fix_params{strcmp(fix_params(:,1),'k'),2};
-nSub=fix_params{strcmp(fix_params(:,1),'nSubs'),2};
-nItems=fix_params{strcmp(fix_params(:,1),'nItems'),2};
-O_imm=1;   
+
 if strcmp(one_shot,'on')
    one_shot_ctrl=true;
 else
    one_shot_ctrl=false;
 end
 
-s_strengths = strengths([S1 S2],rho, [O_imm, O2,O7], nSub, nItems);
-r_strengths = strengths([R1 R_correct],rho, [O_imm, O2,O7], nSub, nItems);
+
+s_strengths = strengths(S_params, rho, O_params, nSub, nItems);
+r_strengths = strengths(R_params, rho, O_params, nSub, nItems);
 pred=recall(s_strengths,r_strengths,design,k,one_shot_ctrl);
 
 
@@ -34,7 +50,7 @@ pred=recall(s_strengths,r_strengths,design,k,one_shot_ctrl);
 Lu=(data.*log(data))+((1-data).*log(1-data));
 Lc=(data.*log(pred))+((1-data).*log(1-pred));
 err=-sum((2*120*(Lc(1:7)-Lu(1:7))));
-if (S1 <=0 || S2 <= 0 || R1 <= 0 || R_correct <= 0 || O2 <= O_imm || O7 <= O_imm || S2 < S1 || R_correct < R1)
+if ( any(S_params < 0)|| any(R_params < 0) || any(diff(O_params) < 0) || any(diff(S_params) < 0) || any(diff(R_params) < 0))
     err=1000000;
 end
 
