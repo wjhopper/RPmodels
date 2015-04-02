@@ -22,8 +22,8 @@ nItems=sort(cell2mat(find_nItems))';
 find_rho=param_list(strcmp(param_list(:,1),'rho'),2);
 rho=sort(cell2mat(find_rho))';
 % Find the nSubs parameter value
-find_nSubs=param_list(strcmp(param_list(:,1),'nSubs'),2);
-nSubs=sort(cell2mat(find_nSubs))';
+find_nSub=param_list(strcmp(param_list(:,1),'nSub'),2);
+nSubs=sort(cell2mat(find_nSub))';
 % end
 % Find the k parameter value
 find_k=param_list(strcmp(param_list(:,1),'k'),2);
@@ -43,7 +43,7 @@ elseif any(strcmp('rho',fix_params(:,1))) && rho ~= 0
     pred=SAM_Sim;
 elseif any(strcmp('rho',fix_params(:,1))) && rho == 0
      rho_txt='Rho fixed @ ';
-     pred=SAM;
+     pred=SAM_Sim;
 end
 
     function pred = SAM_Sim
