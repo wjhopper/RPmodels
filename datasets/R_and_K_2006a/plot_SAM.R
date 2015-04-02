@@ -20,6 +20,8 @@ params=cbind(params, list(k=rep(500, nrow(params))),list(nItems=rep(30, nrow(par
 good<-unlist(params[1,])
 bad<-unlist(params[2,])
 badbutgood<-unlist(params[3,])
+
+# observed data from Roediger and Karpicke, 2006a, Experiment 1
 obs=c(.70,.81,.75,.54,.68,.42,.56)
 data<-data.frame(acc=rep(obs,nrow(params)),
                  time=c(1,1,1,params[1,'O2'],params[1,'O2'],params[1,'O7'],params[1,'O7'],
@@ -30,7 +32,7 @@ data<-data.frame(acc=rep(obs,nrow(params)),
                  class=rep(c("OneStudy", "TwoStudy","Test","TwoStudy","Test","TwoStudy","Test"),nrow(params)),
                  paramset=rep(c(1,2,3),each=length(obs))
                 )
-
+# Generate fits
 point_fits <- SAMRI(params[1,], t=c(1,params[1,'O2'],params[1,'O7']), one_shot='mixed',predict=FALSE)
 melted_fits <- melt(point_fits, id =c("time","one_shot"),variable.name="class",value.name="acc")
 df <- data[data$paramset==1,c('acc','time','class')]
