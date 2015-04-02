@@ -1,14 +1,6 @@
-data/
-IRB/
-figures/
-drafts/
 *.asv
-*.jpg
-*.JPG
-*.gif
-I102811.csv
-cuelist.csv
-targetlist.csv
 *~~
-version
 *.mat
+*.Rhistory
+*.Rdata
+*.html

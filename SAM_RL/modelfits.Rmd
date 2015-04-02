@@ -1,0 +1,44 @@
+---
+title: "Untitled"
+author: "Will Hopper"
+output: html_document
+---
+
+```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
+library(knitr)
+library(pander)
+library(ggplot2)
+library(reshape2)
+opts_chunk$set(echo = FALSE,fig.width=11,fig.height=7,cache=FALSE, 
+               warning=F, message=FALSE, fig.align='center')
+if(.Platform$OS.type == "unix") {
+  setwd(file.path(Sys.getenv("HOME"),"Documents","CEMNL","Testing and Recovery","models","SAM_RL"))
+}   else if (.Platform$OS.type == "windows") {
+  setwd(file.path(Sys.getenv("USERPROFILE"),"Documents","CEMNL","Testing and Recovery","models","SAM_RL"))
+}
+read_chunk(file.path('plot_SAM.R'))
+```
+
+```{r herp}
+<<get_fits>>
+```
+
+```{r p}
+<<fits_only>>
+  print(p1)
+```
+
+```{r new}
+<<one_new_context>>
+    print(p2)
+```
+
+```{r old}
+<<one_old_context>>
+  print(p3)
+```
+
+```{r mixed}
+<<switch_context>>
+  print(p4)
+```
