@@ -1,8 +1,6 @@
 library(reshape2)
 library(ggplot2)
 
-# Rows 1 and 2 will do the CEMS poster data 
-
 ## Get fits 
 ## @knitr get_fits
 mytheme <- theme(axis.title.x=element_text(size=rel(2),vjust=-.65),
@@ -14,9 +12,11 @@ mytheme <- theme(axis.title.x=element_text(size=rel(2),vjust=-.65),
                  legend.text = element_text(size=16),
                  legend.title = element_text(size=20),
                  plot.title = element_text(size=24))
-source('SAMRI.R')
+
+source('../../SAM_RL/SAMRI.R')
 params<-read.csv(file.path(getwd(),'params.csv'),header=T)
 params=cbind(params, list(k=rep(500, nrow(params))),list(nItems=rep(30, nrow(params))))
+# Rows 1 and 2 will do the CEMS poster data 
 good<-unlist(params[1,])
 bad<-unlist(params[2,])
 badbutgood<-unlist(params[3,])
@@ -54,6 +54,7 @@ preds_mixed_c <- SAMRI(params[1,], one_shot='mixed')[,c('time','Test',"one_shot"
 preds_mixed_c <- melt(preds_mixed_c , id =c("time","one_shot"),variable.name="class",value.name="acc")
 preds <- rbind(preds_same_c,preds_diff_c,preds_mixed_c)
 preds$one_shot <- factor(preds$one_shot,levels = c('never', 'always','mixed'))
+
 # preds2 <- SAMRI(params[3,], t=seq(1,5,.1))
 # comb_preds= rbind(preds_same_c,preds_diff_c,preds_mixed_c)
 # melted_preds = melt(comb_preds, id =c("time","one_shot"),variable.name="class",value.name="acc")
@@ -85,52 +86,19 @@ p2 <- ggplot(preds[preds$one_shot=="never",],
       ggtitle('SAM-RL Predictions vs. Observed Data') +
       scale_color_discrete(name = "Conditions",
                            labels = c("Practice Test", "Final Test (S)", "Final Test (T)")) + 
-      
       scale_linetype_manual("Final Test\nContext", 
-                        values = 3,
-                        breaks = c('never'), 
-                        labels = c("Always New Context")) + 
+                            values = c(3,2,1),
+                            breaks = c('never','always','mixed'), 
+                            labels = c("Always New Context","Always Old Context", "Switch Context")) +
       mytheme + 
       guides(colour = guide_legend(order = 1), 
          linetype = guide_legend(order = 2))
 
 ## always old context preds #####
 ## @knitr one_old_context
-p3 <- ggplot(preds[preds$one_shot %in% c("always", "never"),],
-             aes(time,acc,colour=class)) + 
-    geom_path(size=1.25,aes(linetype = one_shot)) + 
-    geom_point(aes(x=time, y=acc),color="black",size=4,
-              data=data[data$paramset==1,]) +
-    geom_point(aes(x=time, y=acc, color=class),size=2.5,
-              data=data[data$paramset==1,]) +
-    xlab("Retention Interval (Days) / Interference (O)") + ylab("Memory Accuracy") + 
-    ggtitle('SAM-RL Predictions vs. Observed Data') +
-    scale_color_discrete(name = "Conditions",
-                       labels = c("Practice Test", "Final Test (S)", "Final Test (T)")) + 
-    scale_linetype_discrete("Final Test\nContext", 
-                          breaks = c('never','always','mixed'), 
-                          labels = c("Always New Context","Always Practice Context", "Switch Context")) +
-    mytheme +
-    guides(colour = guide_legend(order = 1), 
-         linetype = guide_legend(order = 2))
-      
+p3 <- p2  %+% preds[preds$one_shot %in% c("always", "never"),]     
 
 ## switch context preds #####
 ## @knitr switch_context
-p4 <- ggplot(preds, aes(time,acc,colour=class)) + 
-  geom_path(size=1.25,aes(linetype = one_shot)) + 
-  geom_point(aes(x=time, y=acc),color="black",size=4,
-             data=data[data$paramset==1,]) +
-  geom_point(aes(x=time, y=acc, color=class),size=2.5,
-             data=data[data$paramset==1,]) +
-  xlab("Retention Interval (Days) / Interference (O)") + ylab("Memory Accuracy") + 
-  ggtitle('SAM-RL Predictions vs. Observed Data') +
-  scale_color_discrete(name = "Conditions",
-                       labels = c("Practice Test", "Final Test (S)", "Final Test (T)")) +
-  scale_linetype_discrete("Final Test\nContext", 
-                          breaks = c('never','always','mixed'), 
-                          labels = c("Always New Context","Always Practice Context", "Switch Context")) +
-  mytheme +
-  guides(colour = guide_legend(order = 1), 
-         linetype = guide_legend(order = 2))
+p4 <- p3 %+% preds
 

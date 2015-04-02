@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Modeling Results for Roediger and Karpicke 2006a Exp. 1 Data"
 author: "Will Hopper"
 output: html_document
 ---
@@ -12,10 +12,11 @@ library(reshape2)
 opts_chunk$set(echo = FALSE,fig.width=11,fig.height=7,cache=FALSE, 
                warning=F, message=FALSE, fig.align='center')
 if(.Platform$OS.type == "unix") {
-  setwd(file.path(Sys.getenv("HOME"),"Documents","CEMNL","Testing and Recovery","models","SAM_RL"))
+  root <- Sys.getenv("HOME")
 }   else if (.Platform$OS.type == "windows") {
-  setwd(file.path(Sys.getenv("USERPROFILE"),"Documents","CEMNL","Testing and Recovery","models","SAM_RL"))
+  root <- Sys.getenv("USERPROFILE")
 }
+setwd(file.path(root,"Documents","CEMNL","Testing and Recovery","models","datasets", "R_and_K_2006a"))
 read_chunk(file.path('plot_SAM.R'))
 ```
 
@@ -23,21 +24,26 @@ read_chunk(file.path('plot_SAM.R'))
 <<get_fits>>
 ```
 
+# Model 1 - Recovery Learning, Recovery Dependence
+Codename: *SNORLAX*
 ```{r p}
 <<fits_only>>
   print(p1)
 ```
 
+Predictions using best fit parameters of *SNORLAX*, allowing for independent recovery attemptes at every time point after practice test
 ```{r new}
 <<one_new_context>>
     print(p2)
 ```
 
+Predictions using best fit parameters of *SNORLAX*, never allowing a new independent recovery attempt after practice test
 ```{r old}
 <<one_old_context>>
   print(p3)
 ```
 
+Predictions using best fit parameters of *SNORLAX*, allowing a new independent recovery attempt only after initial final test
 ```{r mixed}
 <<switch_context>>
   print(p4)
