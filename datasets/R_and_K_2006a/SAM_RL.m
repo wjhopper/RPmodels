@@ -1,4 +1,4 @@
-function SAM_RL_Sim(varargin)
+function SAM_RL(varargin)
 % SAM Testing Effect Simulation
 % NEEDS A REAL DESCRIPTION BECAUSE ARGUMENT LIST IS CRITICAL!!!!!!!!
 [stack,~]=dbstack; % Find caller!!!
