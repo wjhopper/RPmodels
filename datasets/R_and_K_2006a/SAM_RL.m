@@ -2,7 +2,10 @@ function SAM_RL(varargin)
 % SAM Testing Effect Simulation
 % NEEDS A REAL DESCRIPTION BECAUSE ARGUMENT LIST IS CRITICAL!!!!!!!!
 [stack,~]=dbstack; % Find caller!!!
-
+[p.file_dir , ~, ~]  = fileparts(mfilename('fullpath'));
+parts = strsplit(p.file_dir,'\');
+p.root_dir = fullfile(parts{1:end-2});
+path(path,genpath(p.root_dir));
 if strcmp(stack(1,1).name,mfilename) && size(stack,1)== 1
     if nargin > 0 
         error('SAM_RL:calling', ['If calling SAM_RL_Sim directly, don''t pass in arguments.\n' ...
@@ -15,15 +18,15 @@ if strcmp(stack(1,1).name,mfilename) && size(stack,1)== 1
 
     % Free Parameters
     S1_param={'S1',.004743,0}; %#ok<*NASGU> % mean of sampling strength distribution after initial study
-    S2_param={'S2',.021532,0}; % mean of sampling strength distribution after study practice & correct recall
+    S2_param={'S2',.0220,0}; % mean of sampling strength distribution after study practice & correct recall
     rho_param={'rho',0,1};   % scaling paramter to get SD of sampling distribution
-    R_param={'R',4.036,0}; % Recovery Strength after initial study
-    Rcor_param = {'Rcor',20.81,0}; % Recovery Strength after correct recall
-    O1_param={'O1',2.9828,0}; % Extralist interference at 2 day test
-    O2_param={'O2',4.499,0}; % Extralist interference at 7 day test
+    R_param={'R',4.0016,0}; % Recovery Strength after initial study
+    Rcor_param = {'Rcor',21.1386,0}; % Recovery Strength after correct recall
+    O1_param={'O1',2.9266,0}; % Extralist interference at 2 day test
+    O2_param={'O2',4.5813,0}; % Extralist interference at 7 day test
     k_param={'k',500,1};
     nItems_param={'nItems',30,1};
-    nSubs_param={'nSub',1000,1};
+    nSub_param={'nSub',1000,1};
     z=[ who('-rexexp','*_param')'; repmat({','},1,numel(who('-rexexp','*_param'))) ];
     z=horzcat(z{1:end-1});
     param_list=eval(['vertcat(',z,')']); clear z;
@@ -43,7 +46,7 @@ if strcmp(stack(1,1).name,mfilename) && size(stack,1)== 1
 
     one_shot='on';
     plotting='iter';
-    fit='check';
+    fit='fit';
 elseif strcmp(stack(2,1).name,'run_button_Callback') && size(stack,1) > 1
     % Make Params Array
     hObject=varargin{1};
@@ -99,14 +102,14 @@ if exist('fitted_params','var');
     free_params(:,2)=num2cell(fitted_params)';
     param_list=[free_params; fix_params]     %#ok<NOPRT>
     for j=1:size(param_list,1)
-          eval([param_list{j,1} '_param = ' num2str(param_list{j,2}) ';']);
+          eval([param_list{j,1} '_param = ' num2str(param_list{j,2}) ';'])
           if j==1
             save(file,[param_list{j,1} '_param']);
           else
             save(file,[param_list{j,1} '_param'],'-append');
           end
     end
-    set(handles.set_to_final,'Visible','on');
+%     set(handles.set_to_final,'Visible','on');
 end
     % fminsearch's ouput functions
     function [stop]= history(x,optimvals,state,varargin)
