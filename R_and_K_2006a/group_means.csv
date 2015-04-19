@@ -1,0 +1,9 @@
+group,method,other_type,acc,other_acc,timepoint,n,chain
+all,S,NA,NA,NA,1,NA,1
+all,T,NA,0.7,NA,1,30,2
+imm,T,NA,0.81,NA,2,30,1
+imm,T,NA,0.75,NA,2,30,2
+two,T,NA,0.54,NA,3,30,1
+two,T,NA,0.68,NA,3,30,2
+seven,T,NA,0.42,NA,4,30,1
+seven,T,NA,0.56,NA,4,30,2

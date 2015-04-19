@@ -1,0 +1,59 @@
+---
+title: "Modeling Results for Roediger and Karpicke 2006a Exp. 1 Data"
+author: "Will Hopper"
+output: html_document
+---
+
+```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
+library(knitr)
+library(pander)
+library(ggplot2)
+library(reshape2)
+library(xtable)
+opts_chunk$set(echo = FALSE,fig.width=11,fig.height=7,cache=FALSE, 
+               warning=F, message=FALSE, fig.align='center')
+if(.Platform$OS.type == "unix") {
+  root <- Sys.getenv("HOME")
+}   else if (.Platform$OS.type == "windows") {
+  root <- Sys.getenv("USERPROFILE")
+}
+setwd(file.path(root,"Documents","CEMNL","Testing and Recovery","modeling","R_and_K_2006a","SAMRL"))
+read_chunk(file.path('plotSAMRL.R'))
+```
+
+```{r herp}
+<<get_fits>>
+```
+
+# Model 1 - Recovery Learning, Recovery Dependence
+Codename: *MUNCHLAX*
+```{r p}
+<<fits_only>>
+  print(p1)
+```
+
+```{r params,results='asis'}
+print(xtable(params[1,],digits=c(1,4,4,4,4,4,4,0,0),caption = "Parameters"),
+      type = "html",include.rownames=FALSE,caption.placement="top")
+```
+
+<br>
+$X^2$ = `r round(err,3)`
+
+Predictions using best fit parameters of *MUNCHLAX*, allowing for independent recovery attemptes at every time point after practice test
+```{r new}
+<<one_new_context>>
+    print(p2)
+```
+
+Predictions using best fit parameters of *MUNCHLAX*, never allowing a new independent recovery attempt after practice test
+```{r old}
+<<one_old_context>>
+  print(p3)
+```
+
+Predictions using best fit parameters of *MUNCHLAX*, allowing a new independent recovery attempt only after initial final test
+```{r mixed}
+<<switch_context>>
+  print(p4)
+```
