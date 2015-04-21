@@ -6,13 +6,6 @@ SAMRL<- function (params=data.frame(S1=0,S2=0,R=0,Rcor=0,O2=0, O7=0, k=0,nitems=
   p_recover=data.frame('recovery_Study'=(params$R/((params$R)+t)),
                        'recovery_testPrac'=(params$Rcor/((params$Rcor)+t)))
   
-  # Study condition
-#   p_sample_practice=1-((1-p_sample_study[1,'sampling_initStudy'])^k)
-#   p_recall_practice=p_sample_practice*p_recover[1,'recovery_Study']
-# 
-#   p_sample_study_final=1-((1-p_sample_study[,2])^k)
-#   p_recall_study_final=p_sample_study_final*p_recover[,1]
-#   
   percentSampledOneStudy <-1-((1-p_sample_study$sampling_initStudy)^params$k)
   acc_OneStudy<-percentSampledOneStudy*p_recover$recovery_Study # row 1 is practice test performance!
   

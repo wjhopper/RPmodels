@@ -62,10 +62,6 @@ preds_mixed_c <- melt(preds_mixed_c , id =c("time","one_shot"),variable.name="cl
 preds <- rbind(preds_same_c,preds_diff_c,preds_mixed_c)
 preds$one_shot <- factor(preds$one_shot,levels = c('never', 'always','mixed'))
 
-# preds2 <- SAMRL(params[3,], t=seq(1,5,.1))
-# comb_preds= rbind(preds_same_c,preds_diff_c,preds_mixed_c)
-# melted_preds = melt(comb_preds, id =c("time","one_shot"),variable.name="class",value.name="acc")
-
 
 
 ## Fits only #####
