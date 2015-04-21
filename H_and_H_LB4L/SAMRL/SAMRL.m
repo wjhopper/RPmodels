@@ -2,16 +2,16 @@
 
     ip = inputParser;
     ip.KeepUnmatched = true;
-    ip.addParamValue('S1', unifrnd(.01,.05), @isnumeric)
-    ip.addParamValue('S2', unifrnd(.1,1), @isnumeric)
+    ip.addParamValue('S1', unifrnd(.1,.2), @isnumeric)
+    ip.addParamValue('S2', unifrnd(.5,1), @isnumeric)
     ip.addParamValue('R', unifrnd(4,6), @isnumeric)
     ip.addParamValue('R_cor', unifrnd(20,30), @isnumeric)
-    ip.addParamValue('O1', unifrnd(2,4), @isnumeric)
-    ip.addParamValue('O2', unifrnd(5,7), @isnumeric)
+    ip.addParamValue('O1', unifrnd(1,2), @isnumeric)
+    ip.addParamValue('O2', unifrnd(2,3), @isnumeric)
     ip.addParamValue('rho',0, @isnumeric)
     ip.addParamValue('R_var',0, @isnumeric)
-    ip.addParamValue('k', 400, @isnumeric)
-    ip.addParamValue('p', .7, @isnumeric)
+    ip.addParamValue('k', 10, @isnumeric)
+    ip.addParamValue('p', .8, @isnumeric)
     ip.addParamValue('nSubs',63, @isnumeric)
     ip.addParamValue('free_params', {'S1','S2','R','R_cor','O1','O2','p'})
     ip.addParamValue('fix_params', {'rho','nSubs','k'})
@@ -36,13 +36,18 @@
     fix_param_array = [fix_params', num2cell([tmp{inda}]')];
 
     if ip.Results.fitting
-        fmin_opts=optimset('MaxFunEvals',2500);      
-        [fitted_params, ~, ~ , info] = fminsearch(@(x) ...
-            fitSAMRL(x,rawdata, fix_param_array, free_params', ip.Results.one_shot), param_vec, fmin_opts);
-        [chisquare,data]=fitSAMRL(fitted_params, rawdata,  fix_param_array, free_params', ip.Results.one_shot);
-        final_params = fitted_params;
-        varargout{1} = info;
-
+        fmin_opts=optimset('MaxFunEvals',2500);  
+        best_chisquare = 10000;
+        for i = 1:100
+            [fitted_params, chisquare] = fminsearch(@(x) ...
+                fitSAMRL(x,rawdata, fix_param_array, free_params', ip.Results.one_shot), param_vec, fmin_opts);
+            if chisquare < best_chisquare
+                best_chisquare = chisquare;
+                final_params = fitted_params;
+                param_vec = fitted_params;
+            end
+        end
+        [chisquare,data]=fitSAMRL(final_params, rawdata,  fix_param_array, free_params', ip.Results.one_shot);
     else
         [chisquare,data]=fitSAMRL(param_vec, rawdata,  fix_param_array, free_params', ip.Results.one_shot);
         final_params= param_vec;
