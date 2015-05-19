@@ -3,16 +3,16 @@ library(ggplot2)
 
 ## Get fits 
 ## @knitr get_fits
-mytheme <- theme(axis.title.x=element_text(size=rel(2),vjust=-.65),
-                 axis.title.y=element_text(size=rel(2),vjust=1.5),
-                 axis.title.x=element_text(size=rel(2)),
-                 axis.title.y=element_text(size=rel(2)),
-                 axis.ticks = element_line(size=rel(2)),
-                 axis.text = element_text(size=rel(1.25)),
-                 legend.text = element_text(size=16),
-                 legend.title = element_text(size=20),
-                 plot.title = element_text(size=24))
 
+# mytheme and pres_theme are from .Rprofile
+
+## Set wd, depending on platform
+if(.Platform$OS.type == "unix") {
+  root <- Sys.getenv("HOME")
+}   else if (.Platform$OS.type == "windows") {
+  root <- Sys.getenv("USERPROFILE")
+}
+setwd(file.path(root,"Documents","CEMNL","Testing and Recovery","modeling","R_and_K_2006a","SAMRL"))
 source('SAMRL.R')
 params<-read.csv(file.path(getwd(), '..', 'params.csv'),header=T)
 params=cbind(params, list(k=rep(500, nrow(params))),list(nItems=rep(30, nrow(params))))
@@ -73,20 +73,21 @@ p1 <- ggplot(data = df, aes(x=time, y=acc, shape = type, colour=class)) +
                        labels = c("Practice Test", "Final Test (S)", "Final Test (T)")) +
       scale_shape_manual(name="Source", breaks = c('model','real'), c('Model Fits', 'Obs. Data'), values = c(4,1)) + 
       scale_x_discrete("Retention Interval") + ylab("Memory Accuracy") + 
-      ggtitle('SAM-RL vs. Observed Data') +
+      ggtitle('SAM-RL vs. Roediger & Karpicke 2006b Data') +
       mytheme
+p1_pres <- p1+pres_theme
 
 ## always new context preds #####
 ## @knitr one_new_context
 p2 <- ggplot(preds[preds$one_shot=="never",],
              aes(time,acc,colour=class)) + 
-      geom_line(size=1.25,aes(linetype=one_shot)) + 
-      geom_point(aes(x=time, y=acc),color="black",size=4,
+      geom_line(size=1.75,aes(linetype=one_shot)) + 
+      geom_point(aes(x=time, y=acc),color="black",size=5,
                  data=data[data$paramset==1,]) +
-      geom_point(aes(x=time, y=acc, color=class),size=2.5,
+      geom_point(aes(x=time, y=acc, color=class),size=3.5,
              data=data[data$paramset==1,]) +
       xlab("Retention Interval (Days) / Interference (O)") + ylab("Memory Accuracy") + 
-      ggtitle('SAM-RL Predictions vs. Observed Data') +
+      ggtitle('SAM-RL Predictions vs. Roediger & Karpicke 2006b Data') +
       scale_color_discrete(name = "Conditions",
                            labels = c("Practice Test", "Final Test (S)", "Final Test (T)")) + 
       scale_linetype_manual("Final Test\nContext", 
@@ -97,11 +98,20 @@ p2 <- ggplot(preds[preds$one_shot=="never",],
       guides(colour = guide_legend(order = 1), 
          linetype = guide_legend(order = 2))
 
+p2_pres <- p2+pres_theme
+
 ## always old context preds #####
 ## @knitr one_old_context
-p3 <- p2  %+% preds[preds$one_shot %in% c("always", "never"),]     
+p3 <- p2  %+% preds[preds$one_shot %in% c("always", "never"),]   
+p3_pres <- p3+pres_theme
 
 ## switch context preds #####
 ## @knitr switch_context
 p4 <- p3 %+% preds
+p4_pres <- p4+pres_theme 
+
+
+
+
+
 
