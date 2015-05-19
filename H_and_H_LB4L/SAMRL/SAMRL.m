@@ -53,38 +53,47 @@
         final_params= param_vec;
     end
     
-    figure;
+    h = figure(1);
+    subplot(2,1,1);
+    if numel(intersect({'immediate';'delay'},data.group)) ==2
+        symbol = '-';
+    else
+        symbol = 'x';
+    end    
     hold on     
         xlim([min(data.timepoint)-.25 max(data.timepoint)+.25])
-        title('all group means')
+        title('Condition Means')
         xlabel('timepoint')
-        plot(data.timepoint(strcmp('immediate',data.group)),data.acc(strcmp('immediate',data.group)), 'ro')
-        plot(data.timepoint(strcmp('delay',data.group)), data.acc(strcmp('delay',data.group)),'bo')
-        plot(data.timepoint(strcmp('immediate',data.group)),data.pred_acc(strcmp('immediate',data.group)), 'rx')
-        plot(data.timepoint(strcmp('delay',data.group)), data.pred_acc(strcmp('delay',data.group)),'bx')
+        % Chain 1 = C-T, Chain 2 = C, Chain 3 = S, Chain 4 = T-C, Chain 5 = T
+        plot(data.timepoint(strcmp('immediate',data.group) & data.timepoint==1),data.acc(strcmp('immediate',data.group)& data.timepoint==1), 'or')
+        plot(data.timepoint(strcmp('delay',data.group)& data.timepoint==1), data.acc(strcmp('delay',data.group)& data.timepoint==1),'ob')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==1),data.acc(ismember(data.timepoint, [2 3]) & data.chain==1), 'or')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==2),data.acc(ismember(data.timepoint, [2 3]) & data.chain==2), 'ob')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==3),data.acc(ismember(data.timepoint, [2 3]) & data.chain==3), 'ok')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==5),data.acc(ismember(data.timepoint, [2 3]) & data.chain==5), 'og')
+        plot(data.timepoint(strcmp('immediate',data.group) & data.timepoint==1),data.pred_acc(strcmp('immediate',data.group)& data.timepoint==1), 'xr')
+        plot(data.timepoint(strcmp('delay',data.group)& data.timepoint==1), data.pred_acc(strcmp('delay',data.group)& data.timepoint==1),'xb')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==1),data.pred_acc(ismember(data.timepoint, [2 3]) & data.chain==1), [symbol, 'r'])
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==2),data.pred_acc(ismember(data.timepoint, [2 3]) & data.chain==2), [symbol, 'b'])
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==3),data.pred_acc(ismember(data.timepoint, [2 3]) & data.chain==3), [symbol, 'k'])
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==5),data.pred_acc(ismember(data.timepoint, [2 3]) & data.chain==5), [symbol, 'g'])
         text('position',[min(data.timepoint),min([data.acc data.pred_acc])+.02], ...
          'string', char(['\chi^2{ = }' num2str(chisquare)] ,[ 'One Shot: ' num2str(ip.Results.one_shot)]), ...
          'FontWeight','bold');
     hold off 
-    
-%     figure;
-%     hold on
-%         xlim([-.25 1.25])
-%         title('immediate group conditional means')
-%         xlabel('practice accuracy')
-%         plot([0,1], double(data(strcmp('immediate',data.group) & data.timepoint > 1 &  data.chain == 1,{'cond_neg','cond_plus'})), 'bo')
-%         plot([0,1], double(data(strcmp('immediate',data.group) & data.timepoint > 1 &  data.chain == 5,{'cond_neg','cond_plus'})), 'ro')
-%         plot([0,1], double(data(strcmp('immediate',data.group) & data.timepoint > 1 &  data.chain == 1,{'pred_cond_neg','pred_cond_plus'})), 'bx')
-%         plot([0,1], double(data(strcmp('immediate',data.group) & data.timepoint > 1 &  data.chain == 5,{'pred_cond_neg','pred_cond_plus'})), 'rx')
-%     hold off
-%     
-%     figure;
-%     hold on
-%         xlim([-.25 1.25])
-%         title('practice accuracy')
-%         plot([0,1], double(data(strcmp('delay',data.group) & data.timepoint > 1 &  data.chain == 1,{'cond_neg','cond_plus'})), 'bo')
-%         plot([0,1], double(data(strcmp('delay',data.group) & data.timepoint > 1 &  data.chain == 5,{'cond_neg','cond_plus'})), 'ro')
-%         plot([0,1], double(data(strcmp('delay',data.group) & data.timepoint > 1 &  data.chain == 1,{'pred_cond_neg','pred_cond_plus'})), 'bx')
-%         plot([0,1], double(data(strcmp('delay',data.group) & data.timepoint > 1 &  data.chain == 5,{'pred_cond_neg','pred_cond_plus'})), 'rx')
-%     hold off
+    subplot(2,1,2);
+    hold on
+        title('Conditional Accuracy')
+        xlabel('timepoint')
+        xlim([min(data.timepoint(data.timepoint > 1))-.25 max(data.timepoint(data.timepoint > 1))+.25])
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==1),data.cond_plus(ismember(data.timepoint, [2 3]) & data.chain==1), '+r')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==5),data.cond_plus(ismember(data.timepoint, [2 3]) & data.chain==5), '+g')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==1),data.cond_neg(ismember(data.timepoint, [2 3]) & data.chain==1), 'or')
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==5),data.cond_neg(ismember(data.timepoint, [2 3]) & data.chain==5), 'og')
+        
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==1),data.pred_cond_plus(ismember(data.timepoint, [2 3]) & data.chain==1), [symbol, 'r'])
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==5),data.pred_cond_plus(ismember(data.timepoint, [2 3]) & data.chain==5), [symbol, 'g'])   
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==1),data.pred_cond_neg(ismember(data.timepoint, [2 3]) & data.chain==1), [symbol, 'r'])
+        plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==5),data.pred_cond_neg(ismember(data.timepoint, [2 3]) & data.chain==5), [symbol, 'g'])        
+    hold off
 end
