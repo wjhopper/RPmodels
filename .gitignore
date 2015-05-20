@@ -1,6 +1,7 @@
 *.mat
 *.asv
 *.jpg
+*.png
 *.html
 *.Rhistory
 *.Rdata
