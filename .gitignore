@@ -5,3 +5,7 @@
 *.html
 *.Rhistory
 *.Rdata
+MatlabServer.m
+InputStreamByteWrapper.class
+subfits.csv
+aggfits.csv

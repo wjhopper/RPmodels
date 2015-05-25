@@ -1,0 +1,69 @@
+---
+title: SAM-RL Model Fits to LB4L Cued Recall Data
+author: "Will Hopper"
+date: "Thursday, May 21, 2015"
+output: 
+  html_document:
+    toc: true
+    css: custom.css    
+---
+```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
+library(knitr)
+library(pander)
+library(gridExtra)
+library(xtable)
+opts_chunk$set(echo = FALSE,fig.width=16,fig.height=7,cache=FALSE, 
+               warning=F, message=FALSE, fig.align='center')
+if(.Platform$OS.type == "unix") {
+  root <- Sys.getenv("HOME")
+  wd <- file.path("opt","source","RPmodels","H_and_H_LB4L","SAMRL")
+}   else if (.Platform$OS.type == "windows") {
+  root <- Sys.getenv("USERPROFILE")
+  wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","H_and_H_LB4L","SAMRL")
+}
+read_chunk("plotSAMRL.R")
+source(file.path(root,".Rprofile"))
+```
+
+```{r readAndScore}
+```
+
+```{r subplot}
+```
+
+# Subject-Level Fits  - Immediate Group
+```{r subs_imm, results='asis'}
+  for (i in 1:length(subplots_imm))  {
+    grid.arrange(subplots_imm[[i]][[1]], subplots_imm[[i]][[2]],ncol=2,nrow=1)
+    print(xtable(data.frame(sub_params_imm[i,] , LL = sub_chi_imm[i]),
+                 digits=c(1,4,4,4,4,4,3),
+                 caption = paste("Best Parameters")),
+        type = "html", include.rownames=FALSE, caption.placement="top")
+  '<br>'
+  '<br>'
+  }
+```
+
+# Subject-Level Fits  - Delay Group
+```{r subs_del, results='asis'}
+for (i in 1:length(subplots_del))  {
+  grid.arrange(subplots_del[[i]][[1]], subplots_del[[i]][[2]],ncol=2,nrow=1)
+  print(xtable(data.frame(sub_params_del[i,] , LL = sub_chi_del[i]),
+               digits=c(1,4,4,4,4,4,3),
+               caption = paste("Best Parameters")),
+      type = "html", include.rownames=FALSE, caption.placement="top")    
+  '<br>'
+  '<br>'
+}
+```
+
+# Average Predictions 
+```{r avg_preds,results='asis'}
+<<avgs>>
+  grid.arrange(p1, p2, ncol=2,nrow=1)
+  df <- data.frame(rbind(sf_par_means_imm,sf_par_means_del),LL= c(sf_chi_means_imm, sf_chi_means_del))
+  row.names(df) <- c("Immediate","Delay")                   
+  print(xtable(df, digits=c(1,4,4,4,4,4,3),
+               caption = paste("Average Best Parameters")),
+        type = "html", caption.placement="top")    
+```
