@@ -4,6 +4,9 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
     rng(10); % seed the rng with a constant, so results converge.
     % change values in free_params table with the updated ones from fminseach, and
     % cat them together with the fix_params
+%     if length(free_params) ~= length(num2cell(params'))
+%         a=1;
+%     end
     param_list=[[free_params num2cell(params')]; fix_params(:,1:2)];
     % Find all the S parameter values, and put them in a low-high sorted vector
     find_S=param_list(~cellfun(@isempty,regexp(param_list(:,1),'S\d')),2);
@@ -15,7 +18,7 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
     find_O=param_list(~cellfun(@isempty,regexp(param_list(:,1),'O\d')),2);
     O_imm=1; 
     O_params=[O_imm cell2mat(find_O)'];
-    O_params = [O_params repmat(O_params(end),1,max(data.timepoint)-length(O_params))];
+%     O_params = [O_params repmat(O_params(end),1,max(data.timepoint)-length(O_params))];
     % Find the nItems parameter value
     % find_nItems=param_list(strcmp(param_list(:,1),'nItems'),2);
     % nItems=sort(cell2mat(find_nItems))';
@@ -25,7 +28,6 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
     % Find the nSubs parameter value
     find_nSub=param_list(strcmp(param_list(:,1),'nSubs'),2);
     nSubs=sort(cell2mat(find_nSub))';
-    % end
     % Find the k parameter value
     find_k=param_list(strcmp(param_list(:,1),'k'),2);
     k=sort(cell2mat(find_k))';
@@ -33,40 +35,35 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
     find_p=param_list(strcmp(param_list(:,1),'p'),2);
     p=sort(cell2mat(find_p))';
 
-    if ( any(S_params < 0)|| any(R_params < 0) || param_list{strcmp('R',param_list),2} > param_list{strcmp('R_cor',param_list),2} || ...
-          param_list{strcmp('S1',param_list),2} > param_list{strcmp('S2',param_list),2}  ||  param_list{strcmp('O1',param_list),2} > param_list{strcmp('O2',param_list),2} || p > 1 || ...
-          any(O_params(2:end) < 1))
+    if ( any(S_params <= 0)|| any(R_params <= 0) || any(diff(R_params) < 0) || any(diff(S_params) < 0) || any(diff(O_params) < 0) || (p > 1 || p <=0))
         err=1000000;
     else 
-        data.pred_acc = nan(length(data),1);
-        data.pred_acc_plus = nan(length(data),1);
-        data.pred_acc_neg = nan(length(data),1);
-%         data.S_cor = nan(length(data),1);
-%         data.S_inc = nan(length(data),1);
-%         data.R_cor = nan(length(data),1);
-%         data.R_inc = nan(length(data),1);
-%         data.O = nan(length(data),1);
-
+        s_chain = unique(data.chain(strcmp('S',data.practice) & data.timepoint ==1));
+        t_chain = unique(data.chain(strcmp('T',data.practice) & strcmp('',data.other_type) & ~isnan(data.acc) & data.timepoint ==1));
+        c_chain = unique(data.chain(strcmp('C',data.practice) & strcmp('',data.other_type) & data.timepoint ==1));
+        ot_chain = unique(data.chain(strcmp('T',data.other_type) & data.timepoint ==1));
+        
         if any(strcmp('rho',free_params(:,1))) || any(strcmp('rho',fix_params(:,1))) && rho ~= 0 %#ok<BDSCI>
 %             pred=SAMRL_Sim; 
         elseif (any(strcmp('rho',fix_params(:,1))) && rho == 0 )|| isempty(rho)%#ok<BDSCI>
-            SAMRL;
-%              SAMRL_DEH;
+            if any(strcmp('subject',get(data, 'VarNames')))
+%                 if data.subject(1) ==49 
+%                     a =1;
+%                 end
+                [obs, pred] = SAMRLsub;
+                err=-sum((obs.*log(pred))+((1-obs).*log(1-pred)));  
+            else
+                [obs, pred] =SAMRL;
+                Lu=(obs.*log(obs))+((1-obs).*log(1-obs));
+                Lc=(obs.*log(pred))+((1-obs).*log(1-pred));
+                err=-sum((2*nSubs*(Lc(1:end)-Lu(1:end))));    
+% 
+%                 [obs2, pred2] = SAMRL_DEH;
+%                 LuDEH=(obs2.*log(obs2))+((1-obs2).*log(1-obs2));
+%                 LcDEH=(obs2.*log(pred2))+((1-obs2).*log(1-pred2));
+%                 errDEH=-sum((2*nSubs*(Lc(1:end)-Lu(1:end))));                  
+            end
         end
-
-    %% Check predictions
-        if any(strcmp('subject',get(data, 'VarNames')))
-            obs = [data.acc(~isnan(data.acc) & data.timepoint == 1) ; data.acc(ismember(data.chain, [2,3]) & data.timepoint > 1); ...
-                    data.acc_plus(ismember(data.chain, [1 5]) & data.timepoint > 1); data.acc_neg(ismember(data.chain, [1 5]) & data.timepoint > 1)];
-            pred = [data.pred_acc(~isnan(data.acc) & data.timepoint == 1) ; data.pred_acc(ismember(data.chain, [2,3]) & data.timepoint > 1); ...
-                    data.pred_acc_plus(ismember(data.chain, [1 5]) & data.timepoint > 1); data.pred_acc_neg(ismember(data.chain, [1 5]) & data.timepoint > 1)];        
-        else 
-            obs = data.acc(~isnan(data.acc));
-            pred = data.pred_acc(~isnan(data.acc));        
-        end
-        Lu=(obs.*log(obs))+((1-obs).*log(1-obs));
-        Lc=(obs.*log(pred))+((1-obs).*log(1-pred));
-        err=-sum((2*nSubs*(Lc(1:end)-Lu(1:end))));        
     end
 
 %     function pred = SAMRL_Sim
@@ -75,34 +72,31 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
 %         pred=recall(s_strengths,r_strengths,design,k,one_shot_ctrl);
 %     end
 
-    function SAMRL
-        s_chain = unique(data.chain(strcmp('S',data.practice) & data.timepoint ==1));
-        t_chain = unique(data.chain(strcmp('T',data.practice) & strcmp('',data.other_type) & ~isnan(data.acc) & data.timepoint ==1));
-        c_chain = unique(data.chain(strcmp('C',data.practice) & strcmp('',data.other_type) & data.timepoint ==1));
-        ot_chain = unique(data.chain(strcmp('T',data.other_type) & data.timepoint ==1));
-        
+    function [obs, pred] = SAMRL
         % Predict practice test accuracy
         prac = p .* sample(S_params(1), O_params(1), k) .* recover(R_params(1),O_params(1)); 
         data.pred_acc(data.timepoint == 1 & ~isnan(data.acc)) = prac;
         
         % predict restudy accuracy
-        restudy = sum([ p^2 .* sample(S_params(2), O_params(2:3), k) .* recover(R_params(1),O_params(2:3)) ; ...
-                      (2*p*(1-p)) .*  sample(S_params(1), O_params(2:3), k) .* recover(R_params(1),O_params(2:3))]);
+        restudy = sum([ p^2 .* sample(S_params(2), O_params(2:end), k) .* recover(R_params(1),O_params(2:end)) ; ...
+                      (2*p*(1-p)) .*  sample(S_params(1), O_params(2:end), k) .* recover(R_params(1),O_params(2:end))]);
         data.pred_acc(data.timepoint > 1 & data.chain == s_chain) = restudy(data.timepoint(data.timepoint > 1 & data.chain == s_chain) -1);       
                   
         % predict no practice accuracy
-        control = p .* sample(S_params(1), O_params(2:3), k) .* recover(R_params(1),O_params(2:3));
+        control = p .* sample(S_params(1), O_params(2:end), k) .* recover(R_params(1),O_params(2:end));
         data.pred_acc(data.timepoint > 1 & data.chain == c_chain) = control(data.timepoint(data.timepoint > 1 & data.chain == c_chain) -1);
         
         % predict test practice same cue accuracy
         weight = data.pred_acc(data.chain==t_chain & data.timepoint ==1);
         weight = [weight 1-weight]';
         clms = data.timepoint(data.timepoint > 1 & data.chain == t_chain) -1;
-        if one_shot > 1
-            penalty = p * ((1-  sample(S_params(1), O_params(1), k))/(weight(2,1)));
+        if one_shot > 1 && all(data.timepoint(data.timepoint >1)) <= one_shot
+            penalty = p * (1-  sample(S_params(1), O_params(1), k))/weight(2,1);
+        else
+            penalty = 1; % full strengths
         end
-        same_conditionals = [sample(S_params(2), O_params(2:3), k) .* recover(R_params(2),O_params(2:3)); ...
-                             [penalty 1].*sample(S_params(1), O_params(2:3), k) .* recover(R_params(1),O_params(2:3))];
+        same_conditionals = [sample(S_params(2), O_params(2:end), k) .* recover(R_params(2),O_params(2:end)); ...
+                             [penalty ones(length(O_params(2:end))-1)].*sample(S_params(1), O_params(2:end), k) .* recover(R_params(1),O_params(2:end))];
         data.pred_acc_plus(data.chain==5 & data.timepoint > 1) = same_conditionals(1,clms);
         data.pred_acc_neg(data.chain==5 & data.timepoint > 1) = same_conditionals(2, clms);                            
         test_same = sum(weight .* same_conditionals(:,clms));
@@ -112,12 +106,68 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
         weight = data.pred_acc(strcmp('T',data.practice) & strcmp('C',data.other_type) & data.timepoint ==1);
         weight = [weight 1-weight]';
         clms = data.timepoint(data.timepoint > 1 & data.chain == ot_chain) -1;
-        new_conditionals = [sample(S_params(1), O_params(2:3), k) .* recover(R_params(2),O_params(2:3)); ...
-                            sample(S_params(1), O_params(2:3), k) .* recover(R_params(1),O_params(2:3))];
+        new_conditionals = [sample(S_params(1), O_params(2:end), k) .* recover(R_params(2),O_params(2:end)); ...
+                            sample(S_params(1), O_params(2:end), k) .* recover(R_params(1),O_params(2:end))];
         data.pred_acc_plus(data.chain==1 & data.timepoint > 1) = new_conditionals(1,clms);
         data.pred_acc_neg(data.chain==1 & data.timepoint > 1) = new_conditionals(2,clms);        
         test_diff = sum(weight .* new_conditionals(:,clms));
         data.pred_acc(data.timepoint > 1 & data.chain == ot_chain) = test_diff;
+        
+        obs = [data.acc(~isnan(data.acc) & data.timepoint == 1) ; data.pred_acc(data.timepoint > 1 & data.chain == c_chain); ...
+               data.acc(data.timepoint > 1 & data.chain == s_chain);  data.acc(data.timepoint > 1 & data.chain == t_chain); ...
+               data.acc(data.timepoint > 1 & data.chain == ot_chain); ...
+               data.acc_plus(data.chain==5 & data.timepoint > 1); data.acc_plus(data.chain==1 & data.timepoint > 1);... 
+               data.acc_neg(data.chain==5 & data.timepoint > 1); data.acc_neg(data.chain==1 & data.timepoint > 1) ];
+        pred = [data.pred_acc(~isnan(data.acc) & data.timepoint == 1) ; data.pred_acc(data.timepoint > 1 & data.chain == c_chain); ...
+               data.pred_acc(data.timepoint > 1 & data.chain == s_chain);  data.pred_acc(data.timepoint > 1 & data.chain == t_chain); ...
+               data.pred_acc(data.timepoint > 1 & data.chain == ot_chain); ...
+               data.pred_acc_plus(data.chain==5 & data.timepoint > 1); data.pred_acc_neg(data.chain==5 & data.timepoint > 1);... 
+               data.pred_acc_plus(data.chain==1 & data.timepoint > 1); data.pred_acc_neg(data.chain==1 & data.timepoint > 1) ];              
+    end
+
+    function [obs, pred] = SAMRLsub
+        % Predict practice test accuracy
+        prac = p .* sample(S_params(1), O_params(1), k) .* recover(R_params(1),O_params(1)); 
+       
+        % predict restudy accuracy
+        restudy = sum([ p^2 .* sample(S_params(2), O_params(2), k) .* recover(R_params(1),O_params(2)) ; ...
+                      (2*p*(1-p)) .*  sample(S_params(1), O_params(2), k) .* recover(R_params(1),O_params(2))]);
+
+        % predict no practice accuracy
+        control = p .* sample(S_params(1), O_params(2:end), k) .* recover(R_params(1),O_params(2:end));
+        
+        % predict test practice same cue accuracy
+        weight = [prac 1-prac]';
+        if one_shot > 1 && all(data.timepoint(data.timepoint >1)) <= one_shot
+            penalty = p * (1-  sample(S_params(1), O_params(1), k))/weight(2,1);
+        else
+            penalty = 1; % full strengths
+        end
+        same_conditionals = [sample(S_params(2), O_params(2), k) .* recover(R_params(2),O_params(2)); ...
+                             penalty .*sample(S_params(1), O_params(2), k) .* recover(R_params(1),O_params(2))];
+                           
+        test_same = sum(weight .* same_conditionals);
+        
+        % predict test practice using other cue accuracy
+        new_conditionals = [sample(S_params(1), O_params(2), k) .* recover(R_params(2),O_params(2)); ...
+                            sample(S_params(1), O_params(2), k) .* recover(R_params(1),O_params(2))];    
+        test_diff = sum(weight .* new_conditionals);
+        
+        data.pred_acc(data.timepoint == 1 & ~isnan(data.acc)) = prac; 
+        data.pred_acc(data.timepoint > 1 & data.chain == c_chain) = control;        
+        data.pred_acc(data.timepoint > 1 & data.chain == s_chain) = restudy;  
+        data.pred_acc(data.timepoint > 1 & data.chain == t_chain) = test_same;
+        data.pred_acc(data.timepoint > 1 & data.chain == ot_chain) = test_diff;
+        data.pred_acc_plus(data.timepoint > 1 & data.chain==t_chain) = same_conditionals(1,1);
+        data.pred_acc_neg(data.timepoint > 1 & data.chain==t_chain) = same_conditionals(2,1); 
+        data.pred_acc_plus(data.timepoint > 1 & data.chain==ot_chain) = new_conditionals(1,1);
+        data.pred_acc_neg(data.timepoint > 1 & data.chain==ot_chain) = new_conditionals(2,1);     
+        
+        obs = [data.acc(~isnan(data.acc) & data.timepoint == 1) ; data.acc(ismember(data.chain, [2,3]) & data.timepoint > 1); ...
+               data.acc_plus(ismember(data.chain, [1 5]) & data.timepoint > 1); data.acc_neg(ismember(data.chain, [1 5]) & data.timepoint > 1)];
+        pred = [[ prac; prac] ; control; restudy ; new_conditionals(1,1) ; same_conditionals(1,1) ;  new_conditionals(2,1) ; same_conditionals(2,1)]; 
+        pred(isnan(obs)) = [];        
+        obs(isnan(obs)) = [];
         
     end
 
@@ -129,17 +179,14 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
         precovery = R./(R+O);
     end
         
-    function SAMRL_DEH %#ok<DEFNU>
-
-        k=10;
-
-        O1=1.2; 
-        O2=2;    
-        S1=.15;  
-        S2=.4;   
-        R1=3;    
-        R2=6;   
-
+    function [obs, pred] = SAMRL_DEH %#ok<DEFNU>
+ 
+        O1 = O_params(2);
+        O2 = O_params(3);
+        S1 = S_params(1);
+        S2 = S_params(2);
+        R1 = R_params(1);
+        R2 = R_params(2);
         figure(1);
 
         % test practice
@@ -188,7 +235,6 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
         plot(other_test,'--r');
         plot([.55 .32],'or');
 
-
         axis([.5 2.25 0 1]);
 
         % plot conditionals for same cue and other cue conditions
@@ -201,8 +247,10 @@ function  [err, data] = fitSAMRL(params,data,fix_params,free_params,one_shot)
         plot(same_test_inc,'-k');
         plot(other_test_inc,'--k');
 
-
         axis([.5 2.25 0 1]);
+
+        obs = [[.55 .57 .52 .52] [.44 .28]  [.81 .53] [.56 .46] [.55 .32] [.94 .83]  [.04 .05]  [.64 .36] [.45 .22] ];
+        pred = [ T T T T base  restudy same_test other_test  same_test_cor same_test_inc other_test_cor  other_test_inc];           
 
             function prob=samp(S,O)
                 prob=(1-(1-(S/(S+O)))^k);
