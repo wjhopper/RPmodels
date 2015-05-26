@@ -2,15 +2,15 @@
 
     ip = inputParser;
     ip.KeepUnmatched = true;
-    ip.addParamValue('S1', unifrnd(.1,.2), @isnumeric)
+    ip.addParamValue('S1', unifrnd(.1,.5), @isnumeric)
     ip.addParamValue('S2', unifrnd(.5,1), @isnumeric)
-    ip.addParamValue('R', unifrnd(4,6), @isnumeric)
-    ip.addParamValue('R_cor', unifrnd(20,30), @isnumeric)
-    ip.addParamValue('O1', unifrnd(1,2), @isnumeric)
-    ip.addParamValue('O2', unifrnd(2,3), @isnumeric)
+    ip.addParamValue('R', unifrnd(2,5), @isnumeric)
+    ip.addParamValue('R_cor', unifrnd(5,10), @isnumeric)
+    ip.addParamValue('O1', unifrnd(2,3), @isnumeric)
+    ip.addParamValue('O2', unifrnd(3,4), @isnumeric)
     ip.addParamValue('rho',0, @isnumeric)
     ip.addParamValue('R_var',0, @isnumeric)
-    ip.addParamValue('k', 5, @isnumeric)
+    ip.addParamValue('k', 10, @isnumeric)
     ip.addParamValue('p', .8, @isnumeric)
     ip.addParamValue('nSubs',63, @isnumeric)
     ip.addParamValue('free_params', {'S1','S2','R','R_cor','O1','O2','p'})
@@ -27,11 +27,11 @@
     path(path,genpath(p.file_dir));   
 
     agg_data = dataset('file',fullfile(p.root_dir,'group_means.csv'), ...
-        'format','%s%s%s%f%f%f%f%f%f%f%f%f', 'TreatAsEmpty','NA','Delimiter',',','ReadVarNames','on');
+        'format','%s%s%s%f%f%f%f%f%f%f%f', 'TreatAsEmpty','NA','Delimiter',',','ReadVarNames','on');
     agg_data = cleanAndAdd(agg_data);
     
     subdata = dataset('file',fullfile(p.root_dir,'cond_means_by_ss.csv'), ...
-        'format','%f%s%s%s%f%f%f%f%f%f%f%f%f%f', 'TreatAsEmpty','NA','Delimiter',',','ReadVarNames','on');
+        'format','%f%s%s%s%f%f%f%f%f%f%f%f', 'TreatAsEmpty','NA','Delimiter',',','ReadVarNames','on');
     subdata = cleanAndAdd(subdata);
     subdata = subdata(ismember(subdata.subject,ip.Results.range),:);
 
@@ -80,11 +80,13 @@
                 if chisquare < best_chisquare
                     best_chisquare = chisquare;
                     final_params = fitted_params;
-%                     a = cellfun(@(x) find(strcmp(x,varargin)), free_params, 'Unif', 0 )
-%                     b = [[a{:}] [a{:}] + 1]
-%                     varargin(b)  = []   
-%                     parse(ip,varargin{:}); 
-%                     [~, free_params, param_vec, fix_param_array ] = parse_params(ip);
+                    a = cellfun(@(x) find(strcmp(x,varargin)), free_params, 'Unif', 0 );
+                    b = [[a{:}] [a{:}] + 1];
+                    varargin(b)  = []   ;
+                    parse(ip,varargin{:}); 
+                    [~, free_params, param_vec, fix_param_array ] = parse_params(ip);
+                    free_params(start_param_vec == param_vec) = [];                    
+                    param_vec(start_param_vec == param_vec) = [];
 
                 end
             end
