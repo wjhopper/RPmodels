@@ -3,7 +3,7 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
     utils = getUtils;
     [S_params, R_params, O_params, k, p, rho] = utils.findNamedPars(params, fix_params, free_params);
     
-    if all(params) <=1 && all(params) >=0 
+    if all(params <=1) && all(params >=0) 
         [S_params, R_params, O_params] = utils.transform(S_params(1), S_params(2), S_params(3), R_params(1), R_params(2));
     end
     if ( any(S_params <= 0)|| any(R_params <= 0) || any(diff(R_params) < 0) || any(diff(S_params) < 0) || any(diff(O_params) < 0) || (p > 1 || p <=0))
@@ -59,9 +59,13 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
             obs = [data.acc(~isnan(data.acc) & data.timepoint == 1) ; data.acc(ismember(data.chain, [2,3]) & data.timepoint > 1); ...
                    data.acc_plus(ismember(data.chain, [1 5]) & data.timepoint > 1); data.acc_neg(ismember(data.chain, [1 5]) & data.timepoint > 1)];
             pred = [[ prac; prac] ; control; restudy ; new_conditionals(1,1) ; same_conditionals(1,1) ;  new_conditionals(2,1) ; same_conditionals(2,1)]; 
-            pred(isnan(obs)) = [];        
-            obs(isnan(obs)) = [];            
-            err=-sum((obs.*log(pred))+((1-obs).*log(1-pred)));              
+%             pred(isnan(obs)) = [];        
+%             obs(isnan(obs)) = [];
+            counts =  [ data.n(~isnan(data.acc) & data.timepoint == 1) ; data.n(ismember(data.chain, [2,3]) & data.timepoint > 1); ...
+                        data.nplus(~isnan(data.nplus)); data.nneg(~isnan(data.nneg))];
+            obs = obs .* counts;
+            ll = (obs.*log(pred))+((counts-obs).*log(1-pred));
+            err=-sum(ll(~isnan(ll)));              
         end
     end
 end
