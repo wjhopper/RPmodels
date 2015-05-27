@@ -23,6 +23,7 @@ function  [chisquare, final_params, data, varargout]  = SAM_RL(varargin)
     ip.addParamValue('fix_params', {'rho','nSubs','nItems','k'})
     ip.addParamValue('fitting',true, @islogical)
     ip.addParamValue('one_shot',1, @isnumeric)
+    ip.addParamValue('RI',true, @islogical)      
         
     parse(ip,varargin{:}); 
     [p.file_dir , ~, ~]  = fileparts(mfilename('fullpath'));
@@ -44,13 +45,13 @@ function  [chisquare, final_params, data, varargout]  = SAM_RL(varargin)
     if ip.Results.fitting
         fmin_opts=optimset('MaxFunEvals',2000,'PlotFcn',@optimplotfval);      
         [fitted_params, ~, ~ , info] = fminsearch(@(x) ...
-            fit_SAM_RL(x,rawdata, fix_param_array, free_params', ip.Results.one_shot), param_vec, fmin_opts);
-        [chisquare,data]=fit_SAM_RL(fitted_params, rawdata,  fix_param_array, free_params', ip.Results.one_shot) ;
-         final_params= param_vec;
+            fit_SAM_RL(x,rawdata, fix_param_array, free_params', ip.Results.one_shot, ip.Results.RI), param_vec, fmin_opts);
+        [chisquare,data]=fit_SAM_RL(fitted_params, rawdata,  fix_param_array, free_params', ip.Results.one_shot, ip.Results.RI) ;
+         final_params= fitted_params;
          varargout{1} = info;
     else
-        [chisquare,data]=fit_SAM_RL(param_vec, rawdata,  fix_param_array, free_params', ip.Results.one_shot) ;
-        final_params= fitted_params;
+        [chisquare,data]=fit_SAM_RL(param_vec, rawdata,  fix_param_array, free_params', ip.Results.one_shot, ip.Results.RI) ;
+        final_params= param_vec;
     end
     figure;
     hold on     

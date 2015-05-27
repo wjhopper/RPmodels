@@ -1,10 +1,15 @@
 SAMRL<- function (params=data.frame(S1=0,S2=0,R=0,Rcor=0,O2=0, O7=0, k=0,nitems=0),
-                   t=seq(1,5,.1),one_shot='never',predict = TRUE) {
+                   t=seq(1,5,.1),one_shot='never',predict = TRUE, RI = TRUE) {
 
+  if (RI) {
+    Oind = 1:length(t)
+  } else {
+    Oind = 1
+  }
   p_sample_study=data.frame('sampling_initStudy'=params$S1/((params$S1*30)+t),
                             'sampling_studyPrac'=params$S2/((params$S2*30)+t))
   p_recover=data.frame('recovery_Study'=(params$R/((params$R)+t)),
-                       'recovery_testPrac'=(params$Rcor/((params$Rcor)+t)))
+                       'recovery_testPrac'=(params$Rcor/((params$Rcor)+t[Oind])))
   
   percentSampledOneStudy <-1-((1-p_sample_study$sampling_initStudy)^params$k)
   acc_OneStudy<-percentSampledOneStudy*p_recover$recovery_Study # row 1 is practice test performance!
@@ -17,11 +22,11 @@ SAMRL<- function (params=data.frame(S1=0,S2=0,R=0,Rcor=0,O2=0, O7=0, k=0,nitems=
   #Correct Items
   p_sample_test_correct=params$S2/((params$S2*acc_OneStudy[1]*params$nItems)
                                  +(params$S1*(1-acc_OneStudy[1])*params$nItems)+t);
-  p_recall_test_correct=(1-((1-p_sample_test_correct))^params$k)*p_recover[,'recovery_testPrac']
+  p_recall_test_correct=(1-((1-p_sample_test_correct))^params$k)*p_recover[Oind,'recovery_testPrac']
   #Incorrect Items
   p_sample_test_incorrect=params$S1/((params$S2*acc_OneStudy[1]*params$nItems)
                                      +(params$S1*(1-acc_OneStudy[1])*params$nItems)+t);
-  p_recall_test_incorrect=(1-((1-p_sample_test_incorrect))^params$k)*p_recover[,'recovery_Study']
+  p_recall_test_incorrect=(1-((1-p_sample_test_incorrect))^params$k)*p_recover[Oind,'recovery_Study']
 
   #Recall with same context as practice 
   acc_Test_same_context=(p_recall_test_correct*acc_OneStudy[1]) + (p_recall_test_incorrect*(1-percentSampledOneStudy[1]));

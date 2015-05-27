@@ -1,4 +1,4 @@
-function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot)
+function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot, RI)
 %   Detailed explanation goes here
 
     rng(10); % seed the rng with a constant, so results converge.
@@ -33,6 +33,11 @@ function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot)
           param_list{strcmp('S1',param_list),2} > param_list{strcmp('S2',param_list),2}  ||  param_list{strcmp('O1',param_list),2} > param_list{strcmp('O2',param_list),2})
         err=1000000;
     else 
+        if RI
+            O_ind = 1:3;
+        else
+            O_ind = 1;
+        end        
         data.pred_acc = nan(length(data),1);
         data.S_cor = nan(length(data),1);
         data.S_inc = nan(length(data),1);
@@ -72,8 +77,8 @@ function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot)
             %Tested Items
             p_sample_test_correct = S_params(2)./( (S_params(2)*prac*nItems) + (S_params(1)*(1-prac)*nItems) + O_params );                            
             p_sample_test_incorrect = S_params(1)./( ( S_params(2)*prac*nItems) + (S_params(1)*(1-prac)*nItems) + O_params );
-            p_recall_test_correct = (1-((1-p_sample_test_correct).^k)).*(R_params(2)./(R_params(2)+O_params));
-            p_recall_test_incorrect_imm=(1-((1-p_sample_test_incorrect)).^k).*(R_params(1)./(R_params(1)+O_params));
+            p_recall_test_correct = (1-((1-p_sample_test_correct).^k)).*(R_params(2)./(R_params(2)+O_params(O_ind)));
+            p_recall_test_incorrect_imm=(1-((1-p_sample_test_incorrect)).^k).*(R_params(1)./(R_params(1)+O_params(O_ind)));
             scaler = repmat((1-prac),1,3);
             scaler(one_shot) = (1-( 1-((1-(S_params(1)/( (S_params(1)*30)+ O_params(1) ))) .^k)) );
             test_acc=(p_recall_test_correct*prac) + (p_recall_test_incorrect_imm.*scaler);

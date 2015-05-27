@@ -9,10 +9,12 @@ library(ggplot2)
 ## Set wd, depending on platform
 if(.Platform$OS.type == "unix") {
   root <- Sys.getenv("HOME")
+  wd <- file.path("opt","source","RPmodels","R_and_K_2006a","SAMRL")
 }   else if (.Platform$OS.type == "windows") {
   root <- Sys.getenv("USERPROFILE")
+  wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","R_and_K_2006a","SAMRL")
 }
-setwd(file.path(root,"Documents","CEMNL","Testing and Recovery","modeling","R_and_K_2006a","SAMRL"))
+setwd(wd)
 source('SAMRL.R')
 params<-read.csv(file.path(getwd(), '..', 'params.csv'),header=T)
 params=cbind(params, list(k=rep(500, nrow(params))),list(nItems=rep(30, nrow(params))))
@@ -26,13 +28,14 @@ obs=c(.70,.81,.75,.54,.68,.42,.56)
 data<-data.frame(acc=rep(obs,nrow(params)),
                  time=c(1,1,1,params[1,'O2'],params[1,'O2'],params[1,'O7'],params[1,'O7'],
                         1,1,1,params[2,'O2'],params[2,'O2'],params[2,'O7'],params[2,'O7'],
-                        1,1,1,params[3,'O2'],params[3,'O2'],params[3,'O7'],params[3,'O7']),
+                        1,1,1,params[3,'O2'],params[3,'O2'],params[3,'O7'],params[3,'O7'], 
+                        1,1,1,params[4,'O2'],params[4,'O2'],params[4,'O7'],params[4,'O7']),
                  group=rep(c('test','study','test','study','test','study','test'),nrow(params)),
                  Test_Type=rep(c("Practice Test", "Final Test","Final Test","Final Test","Final Test","Final Test","Final Test"),nrow(params)),
                  class=rep(c("OneStudy", "TwoStudy","Test","TwoStudy","Test","TwoStudy","Test"),nrow(params)),
-                 paramset=rep(c(1,2,3),each=length(obs))
+                 paramset=rep(c(1,2,3,4),each=length(obs))
                 )
-# Generate fits
+# Generate fits for RI model 
 point_fits <- SAMRL(params[1,], t=c(1,params[1,'O2'],params[1,'O7']), one_shot='mixed',predict=FALSE)
 melted_fits <- melt(point_fits, id =c("time","one_shot"),variable.name="class",value.name="acc")
 df <- data[data$paramset==1,c('acc','time','class')]
@@ -41,14 +44,14 @@ melted_fits$one_shot <- NULL
 melted_fits$type <- 'model'
 melted_fits <- melted_fits[!(melted_fits$time > 1 & melted_fits$class=='OneStudy'),]
 df <- rbind(melted_fits,df)
-df$time[df$time==1] <- '5 Minutes'
-df$time[df$time == '2.9828'] <- '2 Days'
-df$time[df$time=='4.499'] <- '7 Days'
-df$time <- factor(df$time,levels= c('5 Minutes','2 Days', '7 Days'))
+# df$time[df$time==1] <- '5 Minutes'
+# df$time[df$time == '2.9828'] <- '2 Days'
+# df$time[df$time=='4.499'] <- '7 Days'
+df$time <- factor(df$time,labels= c('5 Minutes','2 Days', '7 Days'))
 
 # Calculate g^2 error statistic
 pred <- df[df$type=='model','acc']
-obs <- df$acc[c(8,9,11,13,10,12,14)]
+obs <- df$acc[8:14]
 Lc <- obs*(log(pred)) + ((1-obs)*log(1-pred))
 Lu <- obs*(log(obs)) + ((1-obs)*log(1-obs))
 err <- -sum(2*120*(Lc-Lu))
@@ -62,6 +65,36 @@ preds_mixed_c <- melt(preds_mixed_c , id =c("time","one_shot"),variable.name="cl
 preds <- rbind(preds_same_c,preds_diff_c,preds_mixed_c)
 preds$one_shot <- factor(preds$one_shot,levels = c('never', 'always','mixed'))
 
+
+# Generate fits for no RI model 
+point_fits_noRI <- SAMRL(params[4,], t=c(1,params[4,'O2'],params[4,'O7']), one_shot='mixed',predict=FALSE, RI=FALSE)
+melted_fits_noRI <- melt(point_fits_noRI, id =c("time","one_shot"),variable.name="class",value.name="acc")
+df_noRI <- data[data$paramset==4,c('acc','time','class')]
+df_noRI$type <- 'real'
+melted_fits_noRI$one_shot <- NULL
+melted_fits_noRI$type <- 'model'
+melted_fits_noRI <- melted_fits_noRI[!(melted_fits_noRI$time > 1 & melted_fits_noRI$class=='OneStudy'),]
+df_noRI <- rbind(melted_fits_noRI,df_noRI)
+# df_noRI$time[df_noRI$time==1] <- '5 Minutes'
+# df_noRI$time[df_noRI$time == '2.9828'] <- '2 Days'
+# df_noRI$time[df_noRI$time=='4.499'] <- '7 Days'
+df_noRI$time <- factor(df_noRI$time,labels= c('5 Minutes','2 Days', '7 Days'))
+
+# Calculate g^2 error statistic
+pred <- df_noRI[df_noRI$type=='model','acc']
+obs <- df_noRI$acc[8:14]
+Lc <- obs*(log(pred)) + ((1-obs)*log(1-pred))
+Lu <- obs*(log(obs)) + ((1-obs)*log(1-obs))
+err <- -sum(2*120*(Lc-Lu))
+
+preds_same_c_noRI <- SAMRL(params[4,], one_shot='never',RI=FALSE)
+preds_same_c_noRI <- melt(preds_same_c_noRI , id =c("time","one_shot"),variable.name="class",value.name="acc")
+preds_diff_c_noRI <- SAMRL(params[4,],  one_shot='always',RI=FALSE)[,c('time','Test',"one_shot")]
+preds_diff_c_noRI <- melt(preds_diff_c_noRI , id =c("time","one_shot"),variable.name="class",value.name="acc")
+preds_mixed_c_noRI <- SAMRL(params[4,], one_shot='mixed',RI=FALSE)[,c('time','Test',"one_shot")]
+preds_mixed_c_noRI<- melt(preds_mixed_c_noRI , id =c("time","one_shot"),variable.name="class",value.name="acc")
+preds_noRI <- rbind(preds_same_c_noRI,preds_diff_c_noRI,preds_mixed_c_noRI)
+preds_noRI$one_shot <- factor(preds_noRI$one_shot,levels = c('never', 'always','mixed'))
 
 
 ## Fits only #####
@@ -111,7 +144,11 @@ p4 <- p3 %+% preds
 p4_pres <- p4+pres_theme 
 
 
-
-
+p5 <- p1 %+% df_noRI
+p6 <- p2 %+% preds_noRI[preds_noRI$one_shot=="never",]
+p6$layers[[2]] <- geom_point(aes(x=time, y=acc),color="black",size=5, data=data[data$paramset==4,])
+p6$layers[[3]] <- geom_point(aes(x=time, y=acc, color=class),size=3.5,data=data[data$paramset==4,])
+p7 <- p6 %+% preds_noRI[preds$one_shot %in% c("always", "never"),] 
+p8 <- p7 %+% preds_noRI
 
 
