@@ -9,12 +9,15 @@ function [ ll, pars, subdata] = fitSub(varargin)
     ip.addParamValue('R', unifrnd(2,5), @isnumeric)
     ip.addParamValue('R_cor', unifrnd(5,10), @isnumeric)
     ip.addParamValue('O1', unifrnd(2,4), @isnumeric)
+    ip.addParamValue('S1x1', unifrnd(.15,.5), @isnumeric)
+    ip.addParamValue('S1x2', unifrnd(.0,.15), @isnumeric)
+    ip.addParamValue('S2x2', unifrnd(.5,1), @isnumeric)       
     ip.addParamValue('rho',0, @isnumeric)
     ip.addParamValue('R_var',0, @isnumeric)
     ip.addParamValue('k', 10, @isnumeric)
-    ip.addParamValue('p', .8, @isnumeric)
-    ip.addParamValue('free_params', {'S1','S2','R','R_cor','O1','O2','p'})
-    ip.addParamValue('fix_params', {'rho','nSubs','k'})
+    ip.addParamValue('p', 1, @isnumeric)
+    ip.addParamValue('free_params', {'S1','S2','R','R_cor','O1','O2'} )
+    ip.addParamValue('fix_params', {'rho','nSubs','k','p'})
     ip.addParamValue('fitting',true, @islogical)
     ip.addParamValue('one_shot',2, @isnumeric)
     ip.addParamValue('RI',true, @isnumeric)    
@@ -27,13 +30,13 @@ function [ ll, pars, subdata] = fitSub(varargin)
     p.root_dir = fullfile(parts{1:end-1});
     path(path,genpath(p.file_dir));
     
+    [~, free_params, param_vec, fix_param_array ] = utils.parse_params(ip);
 
     subdata = dataset('file',fullfile(p.root_dir,'cond_means_by_ss.csv'), ...
                       'format','%f%s%s%s%f%f%f%f%f%f%f%f', 'TreatAsEmpty','NA','Delimiter',',','ReadVarNames','on');
     subdata = utils.cleanAndAdd(subdata);
     subdata = subdata(ismember(subdata.subject,ip.Results.range),:);
 
-    [~, free_params, param_vec, fix_param_array ] = utils.parse_params(ip);
     ll = zeros(length(unique(subdata.subject)),1);
     pars = zeros(length(unique(subdata.subject)),5);
     k=1;
