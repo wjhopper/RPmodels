@@ -55,7 +55,7 @@ function [ ll, pars, subdata] = fitSub(varargin)
                 b = [[a{:}] [a{:}] + 1];
                 varargin(b)  = []   ;
                 parse(ip,varargin{:}); 
-                [~, free_params, param_vec, fix_param_array ] = parse_params(ip);
+                [~, free_params, param_vec, fix_param_array ] = utils.parse_params(ip);
             end
             [chisquare,data]=SAMRL_sub(final_params,subdata(subdata.subject ==i,:),  fix_param_array, free_params', ip.Results.one_shot,ip.Results.RI);
         else
