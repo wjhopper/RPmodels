@@ -1,5 +1,5 @@
 ---
-title: SAM-RL Model Fits to LB4L Cued Recall Data
+title: SAMRL Fits to LB4L Cued Recall Subjects
 author: "Will Hopper"
 date: "Thursday, May 21, 2015"
 output: 
@@ -21,21 +21,21 @@ if(.Platform$OS.type == "unix") {
   root <- Sys.getenv("USERPROFILE")
   wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","H_and_H_LB4L","SAMRL")
 }
-read_chunk("plotSAMRL.R")
+read_chunk("SAMRL_sub.R")
 source(file.path(root,".Rprofile"))
 ```
 
 ```{r readAndScore}
 ```
 
-```{r subplot}
+```{r subplots}
 ```
 
 # Subject-Level Fits  - Immediate Group
 ```{r subs_imm, results='asis'}
   for (i in 1:length(subplots_imm))  {
     grid.arrange(subplots_imm[[i]][[1]], subplots_imm[[i]][[2]],ncol=2,nrow=1)
-    print(xtable(data.frame(sub_params_imm[i,] , LL = sub_chi_imm[i]),
+    print(xtable(data.frame(sub_params_imm[i,] , LL = sub_ll_imm[i]),
                  digits=c(1,4,4,4,4,4,3),
                  caption = paste("Best Parameters")),
         type = "html", include.rownames=FALSE, caption.placement="top")
@@ -48,7 +48,7 @@ source(file.path(root,".Rprofile"))
 ```{r subs_del, results='asis'}
 for (i in 1:length(subplots_del))  {
   grid.arrange(subplots_del[[i]][[1]], subplots_del[[i]][[2]],ncol=2,nrow=1)
-  print(xtable(data.frame(sub_params_del[i,] , LL = sub_chi_del[i]),
+  print(xtable(data.frame(sub_params_del[i,] , LL = sub_ll_del[i]),
                digits=c(1,4,4,4,4,4,3),
                caption = paste("Best Parameters")),
       type = "html", include.rownames=FALSE, caption.placement="top")    
@@ -59,7 +59,7 @@ for (i in 1:length(subplots_del))  {
 
 # Average Predictions 
 ```{r avg_preds,results='asis'}
-<<avgs>>
+<<means>>
   grid.arrange(p1, p2, ncol=2,nrow=1)
   df <- data.frame(rbind(sf_par_means_imm,sf_par_means_del),LL= c(sf_chi_means_imm, sf_chi_means_del))
   row.names(df) <- c("Immediate","Delay")                   
