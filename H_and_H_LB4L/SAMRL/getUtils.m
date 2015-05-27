@@ -85,7 +85,7 @@ end
             symbol = 'x';
         end    
         hold on     
-            xlim([min(data.timepoint)-.25 max(data.timepoint)+.25])
+            axis([min(data.timepoint)-.25 max(data.timepoint)+.25 0 1])
             title(name)
             xlabel('timepoint')
             % Chain 1 = C-T, Chain 2 = C, Chain 3 = S, Chain 4 = T-C, Chain 5 = T
@@ -101,7 +101,7 @@ end
             plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==2),data.pred_acc(ismember(data.timepoint, [2 3]) & data.chain==2), [symbol, 'm'])
             plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==3),data.pred_acc(ismember(data.timepoint, [2 3]) & data.chain==3), [symbol, 'k'])
             plot(data.timepoint(ismember(data.timepoint, [2 3]) & data.chain==5),data.pred_acc(ismember(data.timepoint, [2 3]) & data.chain==5), [symbol, 'b'])
-            text('position',[min(data.timepoint),min([data.acc data.pred_acc])+.02], ...
+            text('position',[min(data.timepoint),.15], ...
              'string', char(['err = ' num2str(chisquare)] ,[ 'One Shot: ' num2str(oneshotval)]), ...
              'FontWeight','bold');
         hold off 
@@ -109,7 +109,7 @@ end
         hold on
             title('Conditional Accuracy')
             xlabel('Cue (1=Same,2=New)')
-            xlim([.75 2.25])
+            axis([.75 2.25 0 1])
             plot(2,data.acc_plus(ismember(data.timepoint, [2 3]) & data.chain==1), '+r')
             plot(1,data.acc_plus(ismember(data.timepoint, [2 3]) & data.chain==5), '+b')
             plot(2,data.acc_neg(ismember(data.timepoint, [2 3]) & data.chain==1), 'or')
