@@ -2,11 +2,15 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
  
     utils = getUtils;
     [S_params, R_params, O_params, k, p, rho] = utils.findNamedPars(params, fix_params, free_params);
-    
-    if all(params <=1) && all(params >=0) 
-        [S_params, R_params, O_params] = utils.transform(S_params(1), S_params(2), S_params(3), R_params(1), R_params(2));
+    conds_met = true; 
+    if any(strcmp('S1x2',free_params))
+        if ~any(params >1) && ~any(params <0)  
+            [S_params, R_params, O_params] = utils.transform(S_params(1), S_params(2), S_params(3), R_params(1), R_params(2));                    
+        else
+            conds_met = false;
+        end    
     end
-    if ( any(S_params <= 0)|| any(R_params <= 0) || any(diff(R_params) < 0) || any(diff(S_params) < 0) || any(diff(O_params) < 0) || (p > 1 || p <=0))
+    if (~conds_met || any(S_params < 0)|| any(R_params < 0) || any(diff(R_params) < 0) || any(diff(S_params) < 0) || any(diff(O_params) < 0) || (p > 1 || p <=0))
         err=1000000;
     else 
         if RI
@@ -29,7 +33,6 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
 
             control = p .* sample(S_params(1), O_params(2:end), k) .* recover(R_params(1),O_params(O_ind));
            
-
             % predict test practice same cue accuracy
             weight = [prac 1-prac]';
             if one_shot > 1 && all(data.timepoint(data.timepoint >1)) <= one_shot
@@ -59,8 +62,6 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
             obs = [data.acc(~isnan(data.acc) & data.timepoint == 1) ; data.acc(ismember(data.chain, [2,3]) & data.timepoint > 1); ...
                    data.acc_plus(ismember(data.chain, [1 5]) & data.timepoint > 1); data.acc_neg(ismember(data.chain, [1 5]) & data.timepoint > 1)];
             pred = [[ prac; prac] ; control; restudy ; new_conditionals(1,1) ; same_conditionals(1,1) ;  new_conditionals(2,1) ; same_conditionals(2,1)]; 
-%             pred(isnan(obs)) = [];        
-%             obs(isnan(obs)) = [];
             counts =  [ data.n(~isnan(data.acc) & data.timepoint == 1) ; data.n(ismember(data.chain, [2,3]) & data.timepoint > 1); ...
                         data.nplus(~isnan(data.nplus)); data.nneg(~isnan(data.nneg))];
             obs = obs .* counts;
