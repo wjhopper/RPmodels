@@ -20,7 +20,7 @@ function [ ll, pars, subdata] = fitSub(varargin)
     ip.addParamValue('fix_params', {'rho','nSubs','k','p'})
     ip.addParamValue('fitting',true, @islogical)
     ip.addParamValue('one_shot',2, @isnumeric)
-    ip.addParamValue('RI',true, @isnumeric)    
+    ip.addParamValue('RI',true, @islogical)    
     ip.addParamValue('showfigs','On', @ischar)
     ip.addParamValue('range',1:100,@isnumeric)
     parse(ip,varargin{:}); 
@@ -51,11 +51,11 @@ function [ ll, pars, subdata] = fitSub(varargin)
                     best_chisquare = chisquare;
                     final_params = fitted_params;
                 end
-                a = cellfun(@(x) find(strcmp(x,varargin)), free_params, 'Unif', 0 );
-                b = [[a{:}] [a{:}] + 1];
-                varargin(b)  = []   ;
-                parse(ip,varargin{:}); 
-                [~, free_params, param_vec, fix_param_array ] = utils.parse_params(ip);
+%                 a = cellfun(@(x) find(strcmp(x,varargin)), free_params, 'Unif', 0 );
+%                 b = [[a{:}] [a{:}] + 1];
+%                 varargin(b)  = []   ;
+%                 parse(ip,varargin{:}); 
+%                 [~, free_params, param_vec, fix_param_array ] = utils.parse_params(ip);
             end
             [chisquare,data]=SAMRL_sub(final_params,subdata(subdata.subject ==i,:),  fix_param_array, free_params', ip.Results.one_shot,ip.Results.RI);
         else

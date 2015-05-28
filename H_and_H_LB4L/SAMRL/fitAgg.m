@@ -20,7 +20,7 @@ function [ chisquare, final_params, agg_data ] = fitAgg(varargin)
     ip.addParamValue('fix_params', {'rho','nSubs','k','p'})
     ip.addParamValue('fitting',true, @islogical)
     ip.addParamValue('one_shot',2, @isnumeric)
-    ip.addParamValue('RI',true, @isnumeric)    
+    ip.addParamValue('RI',true, @islogical)    
     ip.addParamValue('showfigs','On', @ischar)
     parse(ip,varargin{:}); 
 

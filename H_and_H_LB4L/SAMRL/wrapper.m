@@ -17,13 +17,13 @@ switch set
          % Fit dave's parameters                      
         [aggchi, aggpars, aggfits] = fitAgg('S1',.15,'S2',.4,'R',3,'R_cor',6,'O1',1.2,'O2',2,'k',10,'p',1, 'showfigs','Off'); 
         [sub_ll, sub_params, subfits] = fitSub('S1',.15,'S2',.4,'R',3,'R_cor',6,'O1',1.2,'k',10,'p',1, 'showfigs', 'Off');    
-        [sub_ll_P, sub_params_P, subfits_P] = fitSub('S1x1',.15/(1 +.15),'S1x2', .15/(1.2 +.15),'S2x2', .4/(1.2 +.4),'R',(3/3+1),'R_cor',(6/6+1), ...
+        [sub_ll_P, sub_params_P, subfits_P] = fitSub('S1x1',.15/(1 +.15),'S1x2', .15/(1.2 +.15),'S2x2', .4/(1.2 +.4),'R',3/(3+1),'R_cor',6/(6+1), ...
                                                       'free_params',{'S1x1','S1x2','S2x2','R','R_cor'}, 'showfigs','Off');           
     case 3
          % Fit dave's parameters without recovery interference             
         [aggchi, aggpars, aggfits] = fitAgg('S1',.15,'S2',.4,'R',3,'R_cor',6,'O1',1.2,'O2',2,'showfigs','Off','RI',false); 
         [sub_ll, sub_params, subfits] = fitSub('S1',.15,'S2',.4,'R',3,'R_cor',6,'O1',1.2,'showfigs','Off','RI',false);    
-        [sub_ll_P, sub_params_P, subfits_P] = fitSub('S1x1',.15/(1 +.15),'S1x2', .15/(1.2 +.15),'S2x2', .4/(1.2 +.4),'R',(3/3+1),'R_cor',(6/6+1),'k',10, ...
+        [sub_ll_P, sub_params_P, subfits_P] = fitSub('S1x1',.15/(1 +.15),'S1x2', .15/(1.2 +.15),'S2x2', .4/(1.2 +.4),'R',3/(3+1),'R_cor',6/(6+1), ...
                                                       'free_params',{'S1x1','S1x2','S2x2','R','R_cor'}, 'showfigs','Off','RI',false);                 
     case 4
         % Go for it from random
