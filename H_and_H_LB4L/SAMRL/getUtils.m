@@ -14,10 +14,10 @@ function [S_params, R_params, O_params, k, p, rho, nSubs] = findNamedPars(params
     % cat them together with the fix_params
     param_list=[[free_params num2cell(params')]; fix_params(:,1:2)];
     % Find all the S parameter values, and put them in a low-high sorted vector
-    find_S=param_list(~cellfun(@isempty,regexp(param_list(:,1),'S\d')),2);
+    find_S=param_list(~cellfun(@isempty,regexp(param_list(:,1),'p?S\d')),2);
     S_params=cell2mat(find_S)';
     % Find all the R parameter values, and put them in a low-high sorted vector
-    find_R=param_list(~cellfun(@isempty,regexp(param_list(:,1),'R\w*')),2);
+    find_R=param_list(~cellfun(@isempty,regexp(param_list(:,1),'p?R\w*')),2);
     R_params=cell2mat(find_R)';
     % Find all the O parameter values, and put them in a low-high sorted vector
     find_O=param_list(~cellfun(@isempty,regexp(param_list(:,1),'O\d')),2);

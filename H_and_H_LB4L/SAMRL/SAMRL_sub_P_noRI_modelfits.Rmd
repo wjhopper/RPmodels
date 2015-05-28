@@ -23,7 +23,7 @@ if(.Platform$OS.type == "unix") {
 }
 read_chunk("SAMRL_sub.R")
 source(file.path(root,".Rprofile"))
-model <- list(fname = 'SAMRL_sub_P_noRI_results.Rdata', modelstring = "fitSub('S1x1',.15/(1 +.15),'S1x2', .15/(1.6 +.15),'S2x2', .4/(1.2 +.4),'R',3/(3+1),'R_cor',6/(6+1),'free_params',{'S1x1','S1x2','S2x2','R','R_cor'}, 'showfigs','Off','RI',false);")
+model <- list(fname = 'SAMRL_sub_P_results.Rdata', modelstring = "fitSub('pS1x1',.15/(1 +.15),'pS1x2', .15/(1.2 +.15),'pS2x2', .4/(1.6 +.4),'pR',3/(3+1),'pRcor',6/(6+1),'free_params',{'pS1x1','pS1x2','pS2x2','pR','pRcor'}, 'showfigs','Off','RI',false);")
 ```
 
 ```{r readAndScore}

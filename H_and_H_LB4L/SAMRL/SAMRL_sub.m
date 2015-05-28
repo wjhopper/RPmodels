@@ -3,7 +3,7 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
     utils = getUtils;
     [S_params, R_params, O_params, k, p, rho] = utils.findNamedPars(params, fix_params, free_params);
     conds_met = true; 
-    if any(strcmp('S1x2',free_params))
+    if any(strcmp('pS1x2',free_params))
         if ~any(params >1) && ~any(params <0)  
             [S_params, R_params, O_params] = utils.transform(S_params(1), S_params(2), S_params(3), R_params(1), R_params(2));                    
         else

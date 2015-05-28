@@ -2,8 +2,8 @@
 
 model <- list(fname = 'SAMRL_sub_results.Rdata', modelstring = "fitSub('S1',.15,'S2',.4,'R',3,'R_cor',6,'O1',1.2, 'showfigs','Off');" )
 # model <- list(fname = 'SAMRL_sub_noRI_results.Rdata', modelstring = "fitSub('S1',.15,'S2',.4,'R',3,'R_cor',6,'O1',1.2, 'showfigs','Off','RI',false);" )
-# model <- list(fname = 'SAMRL_sub_P_results.Rdata', modelstring = "fitSub('S1x1',.15/(1 +.15),'S1x2', .15/(1.6 +.15),'S2x2', .4/(1.2 +.4),'R',3/(3+1),'R_cor',6/(6+1),'free_params',{'S1x1','S1x2','S2x2','R','R_cor'}, 'showfigs','Off');")
-# model <- list(fname = 'SAMRL_sub_P_noRI_results.Rdata', modelstring = "fitSub('S1x1',.15/(1 +.15),'S1x2', .15/(1.6 +.15),'S2x2', .4/(1.2 +.4),'R',(3/3+1),'R_cor',(6/6+1),'free_params',{'S1x1','S1x2','S2x2','R','R_cor'}, 'showfigs','Off','RI',false);")
+# model <- list(fname = 'SAMRL_sub_P_results.Rdata', modelstring = "fitSub('pS1x1',.15/(1 +.15),'pS1x2', .15/(1.6 +.15),'pS2x2', .4/(1.2 +.4),'pR',3/(3+1),'pRcor',6/(6+1),'free_params',{'pS1x1','pS1x2','pS2x2','pR','pRcor'}, 'showfigs','Off');")
+# model <- list(fname = 'SAMRL_sub_P_noRI_results.Rdata', modelstring = "fitSub('pS1x1',.15/(1 +.15),'pS1x2', .15/(1.6 +.15),'pS2x2', .4/(1.2 +.4),'pR',(3/3+1),'pRcor',(6/6+1),'free_params',{'pS1x1','pS1x2','pS2x2','pR','pRcor'}, 'showfigs','Off','RI',false);")
 
 ## @knitr readAndScore
 if(.Platform$OS.type == "unix") {
@@ -32,9 +32,9 @@ if (!file.exists(model[[1]])) {
 subfits <- results$fits
 sub_params <- as.data.frame(results$params)
 if (all(sub_params[1,] <=1) && all(sub_params[1,] >= 0 )) {
-  colnames(sub_params) <- c("R","Rcor","S1x1","S1x2","S2x2")
+  colnames(sub_params) <- c("R","Rcor","pS1x1","pS1x2","pS2x2")
 } else {
-  colnames(sub_params) <- c("O","R","Rcor","S1","S2")
+  colnames(sub_params) <- c("O","pR","pRcor","S1","S2")
 }
 
 sub_ll <- results$err
