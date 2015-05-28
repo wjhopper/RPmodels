@@ -1,21 +1,21 @@
 # plotting and fitting utilts
 
-fit <- function(fileString, matlabSting) { 
+fit <- function(fileString, matlabString) { 
   Matlab$startServer()
   matlab <- Matlab()
   isOpen <- open(matlab)
-  evaluate(matlab, paste("[err, params, fits] = ",matlabSting))
+  tryCatch(evaluate(matlab, paste("[err, params, fits] = ",matlabString)),error = function(x) {close(matlab)})
 #   evaluate(matlab, "names = fits.Properties.VarNames(:);")
 #   evaluate(matlab, "fitscell = dataset2cell(fits);")
 #   cnames <- unlist(getVariable(matlab,"names"))
 #   fits <- getVariable(matlab,"fitscell")
-  evaluate(matlab, "export(fits, 'file','fits.csv', 'Delimiter', ',');")
+  tryCatch(evaluate(matlab, "export(fits, 'file','fits.csv', 'Delimiter', ',');"),error = function(x) {close(matlab)})
   fits <- read.csv('fits.csv',header=T,na.strings = "")
   file.remove('fits.csv')
   err <- getVariable(matlab, "err")
   err <- err[[1]]
   params <-  getVariable(matlab, "params")
-  params<-as.data.frame(sub_params[[1]])
+  params<-as.data.frame(params[[1]])
   results<- list(err=err,params=params,fits=fits)
   save(results,file = fileString)
   close(matlab)
