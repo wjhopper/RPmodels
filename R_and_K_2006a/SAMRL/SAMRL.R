@@ -46,7 +46,7 @@ SAMRL<- function (params=data.frame(S1=0,S2=0,R=0,Rcor=0,O2=0, O7=0, k=0,nitems=
     } else if (one_shot =="mixed") {
       # pick 20th time percentile as arbirary context change point
       if (predict) {
-        change_val <- which(t== quantile(t,.2))
+        change_val <- which(t== round(quantile(t,c(.15,.2),1))[1])
       } else {
         change_val <- 1
       }
