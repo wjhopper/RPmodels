@@ -1,59 +1,72 @@
 ---
 title: "Modeling Results for Roediger and Karpicke 2006a Exp. 1 Data"
 author: "Will Hopper"
-output: html_document
+output: 
+  html_document:
+    css: custom.css
+    toc: true
+  
 ---
 
-```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
+```{r knitr_setup, cache=FALSE, warning=F, echo=FALSE, message=FALSE}
 library(knitr)
 library(pander)
-library(ggplot2)
-library(reshape2)
 library(xtable)
+library(reshape2)
+library(ggplot2)
+library(dplyr)
 opts_chunk$set(echo = FALSE,fig.width=11,fig.height=7,cache=FALSE, 
                warning=F, message=FALSE, fig.align='center')
 if(.Platform$OS.type == "unix") {
   root <- Sys.getenv("HOME")
+  wd <- file.path("opt","source","RPmodels","R_and_K_2006a","SAMRL")
 }   else if (.Platform$OS.type == "windows") {
   root <- Sys.getenv("USERPROFILE")
+  wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","R_and_K_2006a","SAMRL")
 }
-setwd(file.path(root,"Documents","CEMNL","Testing and Recovery","modeling","R_and_K_2006a","SAMRL"))
+setwd(wd)
 read_chunk(file.path('plotSAMRL.R'))
+source(file.path(root,'.Rprofile'))
+
 ```
 
-```{r herp}
-<<get_fits>>
+```{r env}
 ```
 
-# Model 1 - Recovery Learning, Recovery Dependence
-Codename: *MUNCHLAX*
-```{r p}
-<<fits_only>>
-  print(p1)
+```{r readIn}
 ```
 
-```{r params,results='asis'}
-print(xtable(params[1,],digits=c(1,4,4,4,4,4,4,0,0),caption = "Parameters"),
+```{r modelfits}
+```
+
+```{r modelplots, fig.width=11,fig.height=11}
+```
+
+# All Models
+```{r all_models,results='asis'}
+print(p1)
+param_table <- data.frame(RI = c("Yes","Yes","No","No"), Dependence = c("Yes", "No", "Yes", "No"),
+                          params, g2 = c(err1,err2,err3,err4))
+print(xtable(param_table,digits=c(1,1,1,4,4,4,4,4,4,0,0,4),caption = "Parameters"),
       type = "html",include.rownames=FALSE,caption.placement="top")
 ```
 
-<br>
-$X^2$ = `r round(err,3)`
-
-Predictions using best fit parameters of *MUNCHLAX*, allowing for independent recovery attemptes at every time point after practice test
-```{r new}
-<<one_new_context>>
-    print(p2)
+# Model 1 - Recovery Intererence and Recovery Dependence
+```{r m1_RI_one_shot,results='hide'}
+print(m1_RI_one_shot_fplots)
 ```
 
-Predictions using best fit parameters of *MUNCHLAX*, never allowing a new independent recovery attempt after practice test
-```{r old}
-<<one_old_context>>
-  print(p3)
+# Model 2 - Recovery Intererence and No Recovery Dependence
+```{r m2_RI_no_one_shot,results='hide'}
+print(m2_RI_no_one_shot_fplots)
 ```
 
-Predictions using best fit parameters of *MUNCHLAX*, allowing a new independent recovery attempt only after initial final test
-```{r mixed}
-<<switch_context>>
-  print(p4)
+# Model 3 - No Recovery Intererence and Recovery Dependence
+```{r m3_no_RI_one_shot,results='hide'}
+print(m3_no_RI_one_shot_fplots )
+```
+
+# Model 4 - No Recovery Intererence and No Recovery Dependence
+```{rm4_no_RI_no_one_shot,results='hide'}
+print(m4_no_RI_no_one_shot_plots)
 ```
