@@ -8,7 +8,7 @@ SAMRL<- function (params=data.frame(S1=0,S2=0,R=0,Rcor=0,O2=0, O7=0, k=0,nitems=
   }
   p_sample_study=data.frame('sampling_initStudy'=params$S1/((params$S1*30)+t),
                             'sampling_studyPrac'=params$S2/((params$S2*30)+t))
-  p_recover=data.frame('recovery_Study'=(params$R/((params$R)+t)),
+  p_recover=data.frame('recovery_Study'=(params$R/((params$R)+t[Oind])),
                        'recovery_testPrac'=(params$Rcor/((params$Rcor)+t[Oind])))
   
   percentSampledOneStudy <-1-((1-p_sample_study$sampling_initStudy)^params$k)

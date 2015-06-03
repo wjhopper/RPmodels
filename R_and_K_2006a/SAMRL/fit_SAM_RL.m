@@ -29,7 +29,7 @@ function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot, 
     find_nItems=param_list(strcmp(param_list(:,1),'nItems'),2);
     nItems=sort(cell2mat(find_nItems))';
 
-    if ( any(S_params < 0)|| any(R_params < 0) || param_list{strcmp('R',param_list),2} > param_list{strcmp('R_cor',param_list),2} || ...
+    if ( any(S_params < 0)|| any(R_params < 0) || any(O_params <1)|| param_list{strcmp('R',param_list),2} > param_list{strcmp('R_cor',param_list),2} || ...
           param_list{strcmp('S1',param_list),2} > param_list{strcmp('S2',param_list),2}  ||  param_list{strcmp('O1',param_list),2} > param_list{strcmp('O2',param_list),2})
         err=1000000;
     else 
@@ -73,7 +73,7 @@ function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot, 
         function  SAMRL
             %Studied Items
             prac = (1-((1-(S_params(1)./( (S_params(1)*30)+ O_params(1) ))) .^k)).*(R_params(1)./(R_params(1)+O_params(1)));
-            study_acc=(1-((1-(S_params(2)./( (S_params(2)*30)+ O_params ))) .^k)).*(R_params(1)./(R_params(1)+O_params));
+            study_acc=(1-((1-(S_params(2)./( (S_params(2)*30)+ O_params ))) .^k)).*(R_params(1)./(R_params(1)+O_params(O_ind)));
             %Tested Items
             p_sample_test_correct = S_params(2)./( (S_params(2)*prac*nItems) + (S_params(1)*(1-prac)*nItems) + O_params );                            
             p_sample_test_incorrect = S_params(1)./( ( S_params(2)*prac*nItems) + (S_params(1)*(1-prac)*nItems) + O_params );
