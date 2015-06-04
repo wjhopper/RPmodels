@@ -48,7 +48,7 @@ function [ ll, pars, subdata] = fitSub(varargin)
             param_vec = starting;
             fmin_opts=optimset('MaxFunEvals',3500,'MaxIter',3500);  
             best_chisquare = 10000;
-            for j = 1:10
+            for j = 1:15
                 [fitted_params, chisquare] = fminsearch(@(x) ...
                     SAMRL_sub(x,subdata(subdata.subject ==i,:), fix_param_array, free_params', ip.Results.one_shot,ip.Results.RI), param_vec, fmin_opts);
                 if chisquare < best_chisquare

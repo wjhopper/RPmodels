@@ -4,7 +4,7 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
     [S_params, R_params, O_params, k, p, rho] = utils.findNamedPars(params, fix_params, free_params);
     conds_met = true; 
     if any(strcmp('pS1x2',free_params))
-        if ~any(params >1) && ~any(params <0)  
+        if ~any(params >1) && ~any(params <0) && ~any(diff(R_params) < 0) % && S_params(3)- S_params(2) > 0 && S_params(1)- S_params(2) > 0 
             [S_params, R_params, O_params] = utils.transform(S_params(1), S_params(2), S_params(3), R_params(1), R_params(2));                    
         else
             conds_met = false;
@@ -35,7 +35,7 @@ function [  err, data ] = SAMRL_sub(params,data,fix_params,free_params,one_shot,
            
             % predict test practice same cue accuracy
             weight = [prac 1-prac]';
-            if one_shot > 1 && all(data.timepoint(data.timepoint >1)) <= one_shot
+            if one_shot > 1 && all(data.timepoint(data.timepoint >1) <= one_shot)
                 penalty = p * (1-  sample(S_params(1), O_params(1), k))/weight(2,1);
             else
                 penalty = 1; % full strengths

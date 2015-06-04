@@ -26,6 +26,8 @@ source(file.path(root,".Rprofile"))
 model <- list(fname = 'SAMRL_sub_P_results.Rdata', modelstring = "fitSub('pS1x1',.15/(1 +.15),'pS1x2', .15/(1.2 +.15),'pS2x2', .4/(1.6 +.4),'pR',3/(3+1),'pRcor',6/(6+1),'free_params',{'pS1x1','pS1x2','pS2x2','pR','pRcor'}, 'showfigs','Off','RI',false);")
 ```
 
+`r print(model[[2]])`
+
 ```{r readAndScore}
 print(model[[2]])
 ```
@@ -37,8 +39,7 @@ print(model[[2]])
 ```{r subs_imm, results='asis'}
   for (i in 1:length(subplots_imm))  {
     grid.arrange(subplots_imm[[i]][[1]], subplots_imm[[i]][[2]],ncol=2,nrow=1)
-    print(xtable(data.frame(sub_params_imm[i,] , LL = sub_ll_imm[i]),
-                 digits=c(1,4,4,4,4,4,3),
+    print(xtable(sub_params_imm[i,], digits=c(1,4,4,4,4,4,3),
                  caption = paste("Best Parameters")),
         type = "html", include.rownames=FALSE, caption.placement="top")
   '<br>'
@@ -50,8 +51,7 @@ print(model[[2]])
 ```{r subs_del, results='asis'}
 for (i in 1:length(subplots_del))  {
   grid.arrange(subplots_del[[i]][[1]], subplots_del[[i]][[2]],ncol=2,nrow=1)
-  print(xtable(data.frame(sub_params_del[i,] , LL = sub_ll_del[i]),
-               digits=c(1,4,4,4,4,4,3),
+  print(xtable(sub_params_del[i,], digits=c(1,4,4,4,4,4,3),
                caption = paste("Best Parameters")),
       type = "html", include.rownames=FALSE, caption.placement="top")    
   '<br>'
@@ -62,10 +62,16 @@ for (i in 1:length(subplots_del))  {
 # Average Predictions 
 ```{r avg_preds,results='asis'}
 <<means>>
-  grid.arrange(p1, p2, ncol=2,nrow=1)
-  df <- data.frame(rbind(sf_par_means_imm,sf_par_means_del),LL= c(sf_ll_means_imm, sf_ll_means_del))
+  grid.arrange(pc_plots$p1, pc_plots$p2, ncol=2,nrow=1)
+  df <- rbind(sf_par_means_imm,sf_par_means_del)
   row.names(df) <- c("Immediate","Delay")                   
   print(xtable(df, digits=c(1,4,4,4,4,4,3),
                caption = paste("Average Best Parameters")),
         type = "html", caption.placement="top")    
+```
+
+
+# Log Odds Predictions 
+```{r avg_LO_preds,results='asis'}
+  grid.arrange(LO_plots$p1, LO_plots$p2, ncol=2,nrow=1)
 ```
