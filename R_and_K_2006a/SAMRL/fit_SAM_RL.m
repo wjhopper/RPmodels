@@ -15,7 +15,7 @@ function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot, 
     find_O=param_list(~cellfun(@isempty,regexp(param_list(:,1),'O\d')),2);
     O_imm=1; 
     O_params=[O_imm sort(cell2mat(find_O))'];
-    O_params = [O_params repmat(O_params(end),1,max(data.timepoint)-length(O_params) - length(unique(data.timepoint(strcmp('all',data.group)))))];
+%     O_params = [O_params repmat(O_params(end),1,max(data.timepoint)-length(O_params) - length(unique(data.timepoint(strcmp('all',data.group)))))];
     % Find the rho parameter value
     find_rho=param_list(strcmp(param_list(:,1),'rho'),2);
     rho=cell2mat(find_rho)';
@@ -82,8 +82,8 @@ function  [err, data] = fit_SAM_RL(params,data,fix_params,free_params,one_shot, 
             scaler = repmat((1-prac),1,3);
             scaler(one_shot) = (1-( 1-((1-(S_params(1)/( (S_params(1)*30)+ O_params(1) ))) .^k)) );
             test_acc=(p_recall_test_correct*prac) + (p_recall_test_incorrect_imm.*scaler);
-            data.pred_acc(data.chain==1 & strcmp('T',data.method)) = study_acc;
-            data.pred_acc (data.chain==2 & strcmp('T',data.method)) = [prac test_acc];       
+            data.pred_acc(data.chain==1 & strcmp('S',data.group) & ~isnan(data.acc) ) = study_acc;
+            data.pred_acc (data.chain==2 & strcmp('T',data.group)) = [prac test_acc];       
         end
 
 

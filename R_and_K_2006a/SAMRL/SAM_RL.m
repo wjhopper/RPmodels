@@ -31,10 +31,10 @@ function  [chisquare, final_params, data, varargout]  = SAM_RL(varargin)
     p.root_dir = fullfile(parts{1:end-1});
     path(path,genpath(p.file_dir));
     rawdata = dataset('file',fullfile(p.root_dir,'group_means.csv'), ...
-        'format','%s%s%s%f%f%f%f%f', 'TreatAsEmpty','NA','Delimiter',',','ReadVarNames','on');
+        'format','%s%f%f%f%f', 'TreatAsEmpty','NA','Delimiter',',','ReadVarNames','on');
     rawdata = replaceWithMissing(rawdata,'Strings','NA');
-    rawdata.cues = ones(length(rawdata),1);
-    rawdata.cues(ismember(rawdata.timepoint,[2,3]) & strcmp(rawdata.other_type,'C')) = 2;
+%     rawdata.cues = ones(length(rawdata),1);
+%     rawdata.cues(ismember(rawdata.timepoint,[2,3]) & strcmp(rawdata.other_type,'C')) = 2;
 
     [fix_params, inda] = intersect(ip.Parameters, ip.Results.fix_params);
     [free_params, indb] = intersect(ip.Parameters, ip.Results.free_params);
