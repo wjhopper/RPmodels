@@ -1,0 +1,33 @@
+---
+title: "PCL vs. R & K  2006a Exp. 1 Data"
+author: "Will Hopper"
+output: 
+  html_document:
+    css: custom.css
+    toc: true
+  
+---
+
+```{r knitr_setup, cache=FALSE, warning=F, echo=FALSE, message=FALSE}
+library(knitr)
+library(xtable)
+opts_chunk$set(echo = FALSE,fig.width=11,fig.height=7,cache=FALSE, 
+               warning=F, message=FALSE, fig.align='center')
+if(.Platform$OS.type == "unix") {
+  root <- Sys.getenv("HOME")
+  wd <- file.path("opt","source","RPmodels","R_and_K_2006a","PCL")
+}   else if (.Platform$OS.type == "windows") {
+  root <- Sys.getenv("USERPROFILE")
+  wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","R_and_K_2006a","PCL")
+}
+setwd(wd)
+source(file.path(root,'.Rprofile'))
+source('plotPCL.R')
+```
+
+# Standard
+```{r standard_preds,results='asis'}
+l <- plotPCL(model=1)
+print(l$plot)
+print(xtable(l$models[[1]]$results[,1:7],digits=3,caption = "Parameters"),type="html",caption.placement='top')
+```
