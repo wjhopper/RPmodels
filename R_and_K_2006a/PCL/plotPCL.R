@@ -10,14 +10,14 @@ plotPCL <- function(model=1, ...) {
     wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","R_and_K_2006a","PCL")
   }
   setwd(wd)
-  source('fitPCL.R')
+  source('PCL.R')
   if (!file.exists('models.Rdata')) {
-    source('PCL.R')
-    models <- PCL(model)
+    source('fitPCL.R')
+    models <- fitPCL(model)
   } else {
     load('models.Rdata')
   }
-  data <- fitPCL(free=optimx:::coef.optimx(models[[model]]$results)[1,], fixed=models[[model]]$fix, data=models[[model]]$data)$data
+  data <- PCL(free=optimx:::coef.optimx(models[[model]]$results)[1,], fixed=models[[model]]$fix, data=models[[model]]$data)$data
   data <- melt(data,id.vars = c("group","chain","timepoint","n"),variable.name = 'type',value.name="pc")
   p1 <- ggplot(data = data, mapping = aes(x=timepoint, y=pc, colour=group,shape=type)) +
     geom_point(color = "black",size=5) +
