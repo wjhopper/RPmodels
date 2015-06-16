@@ -1,8 +1,13 @@
-recall <- function(mem=NULL,thresh=NULL,Tmin=NULL,Tmax=NULL,Time=NULL,lambda=NULL) {
+recall <- function(mem=NULL,thresh=NULL,Tmin=NULL,Tmax=NULL,Time=NULL,lambda=NULL, parallel = NULL) {
 
   totalRT <- matrix(0,nrow=nrow(mem),ncol=ncol(mem))
-  a <- apply(mem,1,sort,decreasing = TRUE,index.return=TRUE)
-  inds <- do.call("rbind", lapply(a, "[[", 2))
+  if (!is.null(parallel)) {
+    a <- parApply(parallel, mem,1,sort.int,decreasing = TRUE,index.return=TRUE, method='quick')
+    inds <- do.call("rbind", parLapply(parallel, a, "[[", 2))
+  } else {
+    a <- apply(mem,1,sort.int,decreasing = TRUE,index.return=TRUE, method='quick')
+    inds <- do.call("rbind", lapply(a, "[[", 2))
+  }
   RT=Tmin + (Tmax-Tmin)*exp(-lambda*abs(mem-thresh))  
   for (i in 1:nrow(mem)) {
     totalRT[i,inds[i,]] <- cumsum(RT[i,inds[i,]])
@@ -15,20 +20,19 @@ g2 <- function(obs,pred,N) {
   Lc <- obs*(log(pred)) + ((1-obs)*log(1-pred))
   Lu <- obs*(log(obs)) + ((1-obs)*log(1-obs))
   err <- -sum(2*N*(Lc-Lu))
-#   print(pred)
-#   print(err)
   return(err)
 }
 
 PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1, Tmin=15), fixed = c(Tmax=60, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=30,Time=420),
-                   data=NULL, fitting=FALSE) {
+                   data=NULL, fitting=FALSE,parallel =NULL) {
   p <- c(free,fixed)
-#   print(free)
-  pnames <- c("ER","LR","TR","F1","F2","Tmin","Tmax","lambda","theta","nFeat","nSim","nList", "Time")
-  if (!all(pnames %in% names(p))) {
-     stop(paste(pnames[!pnames %in% names(p)], " not specified in model,check model input list"))
-  }
   
+#   #   print(free)
+#   pnames <- c("ER","LR","TR","F1","F2","Tmin","Tmax","lambda","theta","nFeat","nSim","nList", "Time")
+#   if (!all(pnames %in% names(p))) {
+#      stop(paste(pnames[!pnames %in% names(p)], " not specified in model,check model input list"))
+#   }
+#   
   if (any(p[c("ER","LR","TR","F1","F2","lambda","theta")] > 1) || any(p[c("ER","LR","TR","F1","F2","lambda","theta")] < 0)) {
     err <- 100000
     return(err)
@@ -36,18 +40,18 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1, Tmin=15), fixed = c(T
   #practice test
   init_mem <- matrix(rbinom(p['nSim']*p['nList'],p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
   init_thresh <- matrix(rbinom(p['nSim']*p['nList'],p['nFeat'], p['theta']),nrow=p['nSim'],ncol=p['nList'])
-  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   
   #restudy practice
   #immediate
   restudyImmStrengths <- init_mem + matrix(rbinom(p['nSim']*p['nList'],p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])
-  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   #2 days
   restudyTwoStrengths <- restudyImmStrengths - matrix(rbinom(p['nSim']*p['nList'],restudyImmStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  restudyTwoAcc <- recall(restudyTwoStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  restudyTwoAcc <- recall(restudyTwoStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   #seven days
   restudySevenStrengths <- restudyTwoStrengths - matrix(rbinom(p['nSim']*p['nList'],restudyTwoStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
-  restudySevenAcc <- recall(restudySevenStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  restudySevenAcc <- recall(restudySevenStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   
   #test practice
   #immediate
@@ -55,21 +59,21 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1, Tmin=15), fixed = c(T
   testImmThresh <- init_thresh
   testImmStrengths[prac==TRUE] <- init_mem[prac==TRUE] + matrix(rbinom(p['nSim']*p['nList'],p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(p['nSim']*p['nList'],p['nFeat']-init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
-  testImmAcc <- recall(testImmStrengths, testImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testImmAcc <- recall(testImmStrengths, testImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   # 2 days 
   testTwoStrengths <- testImmStrengths - matrix(rbinom(p['nSim']*p['nList'],testImmStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  testTwoAcc <- recall(testTwoStrengths, testImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testTwoAcc <- recall(testTwoStrengths, testImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   # 7 days
   testSevenStrengths <- testTwoStrengths - matrix(rbinom(p['nSim']*p['nList'],testTwoStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
-  testSevenAcc <- recall(testSevenStrengths, testImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testSevenAcc <- recall(testSevenStrengths, testImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   
   #baseline
   # 2 days 
   controlTwoStrengths <- init_mem - matrix(rbinom(p['nSim']*p['nList'], init_mem, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  controlTwoAcc <- recall(controlTwoStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  controlTwoAcc <- recall(controlTwoStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   # 7 Days 
-  controlSevenStrengths <- controlTwoStrengths - matrix(rbinom(p['nSim']*p['nList'], controlTwoStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  controlSevenAcc <- recall(controlSevenStrengths,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  controlSevenStrengths <- controlTwoStrengths - matrix(rbinom(p['nSim']*p['nList'], controlTwoStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
+  controlSevenAcc <- recall(controlSevenStrengths,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=parallel)
   
   data$predAcc<-NA
   data$predAcc[data$chain==1 & data$timepoint > 1] = c(mean(restudyImmAcc), mean(restudyTwoAcc), mean(restudySevenAcc))

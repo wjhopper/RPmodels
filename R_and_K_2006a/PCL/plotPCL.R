@@ -12,7 +12,7 @@ plotPCL <- function(model=1, ...) {
   setwd(wd)
   source('PCL.R')
   if (!file.exists('models.Rdata')) {
-    source('fitPCL.R')
+#     source('fitPCL.R')
     models <- fitPCL(model)
   } else {
     load('models.Rdata')
