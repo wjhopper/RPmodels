@@ -9,7 +9,7 @@ fitPCL <- function(model=1,...){
     cl <- NULL
   }
   ## Set wd, depending on platform
-  if (any(c(is.null(sys.call(-1)), as.character((sys.call(-1)))!="plotPCL"))) {
+  if (any(c(is.null(sys.call(-1)), if (!is.null(sys.call(-1))){!agrepl(as.character((sys.call(-1))),"plotPCL")}else{TRUE}))) {
     if(.Platform$OS.type == "unix") {
       root <- Sys.getenv("HOME")
       wd <- file.path("/opt","source","RPmodels","H_and_H_LB4L","PCL")
@@ -25,13 +25,13 @@ fitPCL <- function(model=1,...){
   
   models <- list('std' = list(fcn = PCL, free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1),
                                    fix= c(Tmin= .25, Tmax=20, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=data,
-                                   low = -Inf, up = Inf), 
+                                   low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(data$subject)))), 
                  'std_ss' = list(fcn = PCLss, free= c(ER=.58,LR=.07,TR =.1, F1=.1),
                                    fix= c(Tmin= .25, Tmax=20, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=SS_data,
-                                   low = -Inf, up = Inf),
+                                   low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))),
                  'minFree_ss' = list(fcn = PCLss, free= c(ER=.58,LR=.07,TR =.1, F1=.1,Tmin= .25),
                                  fix= c(Tmax=20, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=SS_data,
-                                 low = -Inf, up = Inf))
+                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))))
   
   for (i in model) {
     reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))   
@@ -43,16 +43,21 @@ fitPCL <- function(model=1,...){
     k=1
     for (j in unique(models[[i]]$data$subject)){
       message(paste("Fitting Subject", j, ": model", names(models[i])))
-      a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
-                  fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE, cluster=cl)
-      models[[i]]$result[[k]] <- a
+#       a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
+#                   fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE, cluster=cl)
+#       models[[i]]$results[[k]] <- a
+      res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=FALSE, cluster=cl)
+      models[[i]]$results[[k]] <- res
       k=k+1
     }
+    tosave <- models[[i]]
+    save(tosave,file=paste(names(models[i]),"_results.Rdata",sep=''))
+    
   }
-  if (exists(cl)) {
+  if (exists('cl')) {
     stopCluster(cl)
   }
-  save(models,file='models.Rdata')
-  return(models[[models]])
+#   save(models,file='models.Rdata')
+  return(models[model])
   
 }

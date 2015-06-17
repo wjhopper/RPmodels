@@ -105,7 +105,7 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   if (fitting) {
     return(err)
   } else {
-    return(list(data = data, err=err))
+    return(data)
   }
 }
 
@@ -187,6 +187,6 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   if (fitting) {
     return(err)
   } else {
-    return(list(data = data, err=err))
+    return(data)
   }  
 }
