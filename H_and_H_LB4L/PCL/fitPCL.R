@@ -12,7 +12,7 @@ fitPCL <- function(model=1,...){
   if (any(c(is.null(sys.call(-1)), as.character((sys.call(-1)))!="plotPCL"))) {
     if(.Platform$OS.type == "unix") {
       root <- Sys.getenv("HOME")
-      wd <- file.path("opt","source","RPmodels","H_and_H_LB4L","PCL")
+      wd <- file.path("/opt","source","RPmodels","H_and_H_LB4L","PCL")
     }   else if (.Platform$OS.type == "windows") {
       root <- Sys.getenv("USERPROFILE")
       wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","H_and_H_LB4L","PCL")
@@ -28,7 +28,10 @@ fitPCL <- function(model=1,...){
                                    low = -Inf, up = Inf), 
                  'std_ss' = list(fcn = PCLss, free= c(ER=.58,LR=.07,TR =.1, F1=.1),
                                    fix= c(Tmin= .25, Tmax=20, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=SS_data,
-                                   low = -Inf, up = Inf))
+                                   low = -Inf, up = Inf),
+                 'minFree_ss' = list(fcn = PCLss, free= c(ER=.58,LR=.07,TR =.1, F1=.1,Tmin= .25),
+                                 fix= c(Tmax=20, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=SS_data,
+                                 low = -Inf, up = Inf))
   
   for (i in model) {
     reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))   
@@ -38,7 +41,8 @@ fitPCL <- function(model=1,...){
       stop(paste(reqParams[!reqParams %in% givenParams], " not specified in model,check model input list"))
     }    
     k=1
-    for (j in models[[i]]$data$subject){
+    for (j in unique(models[[i]]$data$subject)){
+      message(paste("Fitting Subject", j, ": model", names(models[i])))
       a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
                   fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE, cluster=cl)
       models[[i]]$result[[k]] <- a

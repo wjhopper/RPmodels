@@ -27,8 +27,8 @@ g2 <- function(obs,pred,N) {
 
 LL <- function(obs,pred,N) {
   obs = obs * N
-  ll = (obs*log(pred))+((counts-obs)*log(1-pred))
-  err=-sum(ll(!is.nan(ll)));          
+  ll = (obs*log(pred))+((N-obs)*log(1-pred))
+  err=-sum(ll[!is.nan(ll)]);          
   return(err)
 }
 
@@ -161,22 +161,29 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   testOCImmAccPlus <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE) # careful, is of class Matrix, not matrix
   testOCImmAccNeg <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE)
   testOCImmAcc<- recall(testOCImmStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
-  testImmAccPlus[prac==TRUE] <- testOCImmAcc[prac==TRUE] 
-  testImmAccNeg[prac==FALSE] <- testOCImmAcc[prac==FALSE]
+  testOCImmAccPlus[prac==TRUE] <- testOCImmAcc[prac==TRUE] 
+  testOCImmAccNeg[prac==FALSE] <- testOCImmAcc[prac==FALSE]
   
   #compute predictions
   avgs <- lapply(list(prac=prac, chain1plus = testOCImmAccPlus,chain1neg = testOCImmAccNeg, chain2 = controlImmAcc, chain3= restudyImmAcc,
                       chain5plus = testImmAccPlus,chain5neg = testImmAccNeg), mean)
   avgs$chain1 <- (avgs$chain1plus*avgs$prac)+(avgs$chain1neg*(1-avgs$prac))
   avgs$chain5 <- (avgs$chain5plus*avgs$prac)+(avgs$chain5neg*(1-avgs$prac))
+  # Fill in data frame with preds
   data$pred_acc[!is.na(data$acc) & data$timepoint==1]  <- avgs$prac
-  data[data$chain==1, c("pred_acc", "pred_accc_plus","pred_acc_neg")] <- avgs[c("chain1", "chain1plus","chain1neg")]
+  data[data$chain==1 & data$timepoint!=1, c("pred_acc", "pred_acc_plus","pred_acc_neg")] <- avgs[c("chain1", "chain1plus","chain1neg")]
   data$pred_acc[data$chain==2 & data$timepoint!=1] <- avgs$chain2
   data$pred_acc[data$chain==3 & data$timepoint!=1] <- avgs$chain3
   data[data$chain==5  & data$timepoint!=1, c("pred_acc", "pred_acc_plus","pred_acc_neg")] <- avgs[c("chain5", "chain5plus","chain5neg")]
-  preds <- c(data$pred_acc[!is.na(data$pred_acc) & !(data$chain %in% c(1,5))], data$pred_acc_plus[!is.na(data$pred_acc_plus)], data$pred_acc_neg[!is.na(data$pred_acc_neg)])
-  obs <- c(data$acc[!is.na(data$acc) & !(data$chain %in% c(1,5))], data$acc_plus[!is.na(data$acc_plus)], data$pred_acc_neg[!is.na(data$acc_neg)])
-  err <- LL(obs=obs,pred=pred,N=c(rep(p['nList'], length(preds) - 4), data$nplus[!(is.na(data$nplus))], data$nneg[!(is.na(data$nneg))]))
+  preds <- c(data$pred_acc[!is.na(data$pred_acc) & data$timepoint ==1],
+             data$pred_acc[!is.na(data$pred_acc) & !data$chain %in% c(1,5) & data$timepoint !=1], 
+             data$pred_acc_plus[!is.na(data$pred_acc_plus)], 
+             data$pred_acc_neg[!is.na(data$pred_acc_neg)])
+  obs <- c(data$acc[!is.na(data$acc) & data$timepoint ==1],
+           data$acc[!is.na(data$acc) & !data$chain %in% c(1,5) & data$timepoint !=1], 
+           data$acc_plus[!is.na(data$acc_plus)], 
+           data$pred_acc_neg[!is.na(data$acc_neg)])
+  err <- LL(obs=obs,pred=preds,N=c(rep(p['nList'], length(preds) - 4), data$nplus[!(is.na(data$nplus))], data$nneg[!(is.na(data$nneg))]))
   if (fitting) {
     return(err)
   } else {
