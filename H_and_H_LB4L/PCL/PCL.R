@@ -1,20 +1,13 @@
-recall <- function(mem=NULL,thresh=NULL,Tmin=NULL,Tmax=NULL,Time=NULL,lambda=NULL, parallel =NULL) {
-  
-#   totalRT <- matrix(0,nrow=nrow(mem),ncol=ncol(mem))
-  if (!is.null(parallel)) {
-    a <- parApply(parallel, mem,1,sort.int,decreasing = TRUE,index.return=TRUE, method='quick')
-    inds <- do.call("rbind", parLapply(parallel, a, "[[", 2))
-  } else {
-    a <- apply(mem,1,sort.int,decreasing = TRUE,index.return=TRUE, method='quick')
-    inds <- do.call("rbind", lapply(a, "[[", 2))
-  }
+recallTime <- function(mem=NULL,thresh=NULL,Tmin=NULL,Tmax=NULL,Time=NULL,lambda=NULL) {
   RT=Tmin + (Tmax-Tmin)*exp(-lambda*abs(mem-thresh))  
-#   for (i in 1:nrow(mem)) {
-#     totalRT[i,inds[i,]] <- cumsum(RT[i,inds[i,]])
-#   }
   recalled <- (RT < Time) & (mem > thresh)
   return(recalled)
 }
+
+recallNoTime <- function(mem=NULL,thresh=NULL) {
+  recalled <- mem > thresh
+  return(recalled)
+} 
 
 g2 <- function(obs,pred,N) {
   Lc <- obs*(log(pred)) + ((1-obs)*log(1-pred))
@@ -32,7 +25,7 @@ LL <- function(obs,pred,N) {
   return(err)
 }
 
-PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=NULL,Time=NULL),
+PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=NULL),
                    data=NULL, fitting=FALSE, cluster = NULL) {
   
   p <- c(free,fixed)
@@ -41,6 +34,11 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
     err <- 100000
     return(err)
   } 
+  if (any(is.na(c(p["lambda"],p["Tmin"],p["Tmax"],p['Time'])))) {
+    recall <- recallNoTime
+  } else{
+    recall <- recallTime
+  }
   mxn <-  p['nSim']*p['nList'] #dimensions precalculation 
   
   #practice test
@@ -120,16 +118,18 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
                           data=NULL, fitting=FALSE,cluster= NULL) {
   
   p <- c(free,fixed)
-  #   print(free)
-  pnames <- c("ER","LR","TR","F1","Tmin","Tmax","lambda","theta","nFeat","nSim","nList", "Time")
-  if (!all(pnames %in% names(p))) {
-    stop(paste(pnames[!pnames %in% names(p)], " not specified in model,check model input list"))
-  }
-  
+
   if (any(p[names(p) %in% c("ER","LR","TR","F1","theta")] > 1) || any(names(p) %in% c("ER","LR","TR","F1","lambda","theta") < 0)) {
     err <- 100000
     return(err)
   } 
+  
+  if (any(is.na(c(p["lambda"],p["Tmin"],p["Tmax"],p['Time'])))) {
+    recall <- recallNoTime
+  } else{
+    recall <- recallTime
+  }
+  
   mxn <-  p['nSim']*p['nList'] #dimensions precalculation 
   
   #practice test
