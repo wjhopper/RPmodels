@@ -1,4 +1,4 @@
-fitPCL <- function(model=1,...){
+fitPCL <- function(model=1,...,debugLevel = 0,) {
   library(optimx)
   library(Matrix)
   is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
@@ -20,7 +20,7 @@ fitPCL <- function(model=1,...){
     setwd(wd)
   }
   source('PCL.R')
-  data <- cbind(read.csv(file.path('..','group_means.csv')),pred_acc = NA,subject=9999)
+  data <- cbind(read.csv(file.path('..','group_means.csv')),pred_acc = NA,pred_acc_plus= NA,pred_acc_neg= NA,subject=9999)
   SS_data <- cbind(read.csv(file.path('..','cond_means_by_ss.csv')),pred_acc = NA,pred_acc_plus= NA,pred_acc_neg= NA)
   
   models <- list('std' = list(fcn = PCL, free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1),
@@ -40,14 +40,20 @@ fitPCL <- function(model=1,...){
     if (!all( reqParams[reqParams != ""]  %in% givenParams)) {
       stop(paste(reqParams[!reqParams %in% givenParams], " not specified in model,check model input list"))
     }    
+    if (debugLevel[1] == 2) {
+      setBreakpoint('PCL.R', line=debugLevel[2])
+    }
     k=1
     for (j in unique(models[[i]]$data$subject)){
-      message(paste("Fitting Subject", j, ": model", names(models[i])))
-#       a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
-#                   fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE, cluster=cl)
-#       models[[i]]$results[[k]] <- a
+      if (debugLevel[1] == 0 || debugLevel[1]==2 ) {
+        message(paste("Fitting Subject", j, ": model", names(models[i])))
+        a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
+                    fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE, cluster=cl)
+        models[[i]]$results[[k]] <- a
+      } else if (debugLevel[1] == 1) {
       res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=FALSE, cluster=cl)
       models[[i]]$results[[k]] <- res
+      }
       k=k+1
     }
     tosave <- models[[i]]
@@ -57,7 +63,6 @@ fitPCL <- function(model=1,...){
   if (exists('cl')) {
     stopCluster(cl)
   }
-#   save(models,file='models.Rdata')
   return(models[model])
   
 }
