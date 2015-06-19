@@ -1,12 +1,20 @@
-fitPCL <- function(model=1,...,debugLevel = 0,) {
+fitPCL <- function(model=1,...,debugLevel = 0) {
   library(optimx)
   library(Matrix)
   is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
-  if (is.installed('parallel')) {
+  needed <- list("foreach","doParallel","doRNG")
+  if (all(sapply(needed,is.installed))) {
     library(parallel)
+    library(foreach)
+    library(doParallel)
+    library(doRNG)
     cl <- makeCluster(detectCores()-1)
+    registerDoParallel(cl)
+    registerDoRNG(456)
+    inpar = TRUE
   } else {
-    cl <- NULL
+    inpar = FALSE
+    
   }
   ## Set wd, depending on platform
   if (any(c(is.null(sys.call(-1)), if (!is.null(sys.call(-1))){!agrepl(as.character((sys.call(-1))),"plotPCL")}else{TRUE}))) {
@@ -34,7 +42,7 @@ fitPCL <- function(model=1,...,debugLevel = 0,) {
                                  low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))))
   
   for (i in model) {
-    reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))   
+    reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))
     reqParams <- reqParams[reqParams != ""]
     givenParams <- names(c(models[[i]]$free,models[[i]]$fix))
     if (!all( reqParams[reqParams != ""]  %in% givenParams)) {
@@ -44,25 +52,37 @@ fitPCL <- function(model=1,...,debugLevel = 0,) {
       setBreakpoint('PCL.R', line=debugLevel[2])
     }
     k=1
-    for (j in unique(models[[i]]$data$subject)){
-      if (debugLevel[1] == 0 || debugLevel[1]==2 ) {
-        message(paste("Fitting Subject", j, ": model", names(models[i])))
-        a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
-                    fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE, cluster=cl)
-        models[[i]]$results[[k]] <- a
-      } else if (debugLevel[1] == 1) {
-      res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=FALSE, cluster=cl)
-      models[[i]]$results[[k]] <- res
+    if (debugLevel[1] == 0 || debugLevel[1]==2 ) {
+      if (inpar) {
+        m <- models[[i]]
+        a <- foreach(j =unique(m$data$subject),m=m,.packages="optimx") %dopar% {
+          print(m)
+#           optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
+#                  fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE)
+        }
+        models[[i]]$results <- a
+      } else {
+          for (j in unique(models[[i]]$data$subject)) {
+            a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
+                        fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE)
+            models[[i]]$results[[k]] <- a
+            k=k+1
+          }
       }
-      k=k+1
+    } else if (debugLevel[1] == 1) {
+      for (j in unique(models[[i]]$data$subject)) {
+        message(paste("Fitting Subject", j, ": model", names(models[i])))
+        res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=FALSE, cluster=cl)
+        models[[i]]$results[[k]] <- res
+        k=k+1
+      }
     }
     tosave <- models[[i]]
     save(tosave,file=paste(names(models[i]),"_results.Rdata",sep=''))
-    
   }
+
   if (exists('cl')) {
     stopCluster(cl)
   }
   return(models[model])
-  
 }

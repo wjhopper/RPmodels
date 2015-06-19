@@ -26,7 +26,7 @@ LL <- function(obs,pred,N) {
 }
 
 PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=NULL),
-                   data=NULL, fitting=FALSE, cluster = NULL) {
+                   data=NULL, fitting=FALSE) {
   
   p <- c(free,fixed)
 
@@ -44,24 +44,24 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   #practice test
   init_mem <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
   init_thresh <- matrix(rbinom(mxn,p['nFeat'], p['theta']),nrow=p['nSim'],ncol=p['nList'])
-  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
+  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   #control no practice
   #imm
   controlImmStrengths <- init_mem - matrix(rbinom(mxn, init_mem, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  controlImmAcc <- recall(controlImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  controlImmAcc <- recall(controlImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   #del
   controlDelStrengths <- controlImmStrengths - matrix(rbinom(mxn, controlImmStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
-  controlDelAcc <- recall(controlDelStrengths,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
+  controlDelAcc <- recall(controlDelStrengths,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   # study practice
   #imm
   restudyStrengths <- init_mem + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])
   restudyImmStrengths  <- restudyStrengths - matrix(rbinom(mxn,restudyStrengths, p['LR']),nrow=p['nSim'],ncol=p['nList'])
-  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   #del
   restudyDelStrengths <- restudyImmStrengths - matrix(rbinom(mxn,restudyImmStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
-  restudyDelAcc <- recall(restudyDelStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
+  restudyDelAcc <- recall(restudyDelStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   # test practice
   #copy strengths and thresholds from practice test 
@@ -71,12 +71,12 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   testStrengths[prac==TRUE] <- init_mem[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat']-init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmStrengths <- testStrengths - matrix(rbinom(p['nSim']*p['nList'],testStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testImmAccPlus <- testImmAcc[prac==TRUE]
   testImmAccNeg <- testImmAcc[prac==FALSE]
   #del
   testDelStrengths <- testStrengths - matrix(rbinom(mxn,testStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
-  testDelAcc <- recall(testDelStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
+  testDelAcc <- recall(testDelStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   testDelAccPlus <- testDelAcc[prac==TRUE]
   testDelAccNeg <- testDelAcc[prac==FALSE]
   
@@ -84,12 +84,12 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   #imm
   testOCImmStrengths <- controlImmStrengths
   testOCImmThresh <- testThresh
-  testOCImmAcc <- recall(testOCImmStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  testOCImmAcc <- recall(testOCImmStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testOCImmAccPlus <- testOCImmAcc[prac==TRUE]
   testOCImmAccNeg <- testOCImmAcc[prac==FALSE]
   #del
   testOCDelStrengths <-controlDelStrengths
-  testOCDelAcc <- recall(testOCDelStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
+  testOCDelAcc <- recall(testOCDelStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   testOCDelAccPlus <- testOCDelAcc[prac==TRUE]
   testOCDelAccNeg <- testOCDelAcc[prac==FALSE]
 
@@ -115,7 +115,7 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
 }
 
 PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=NULL,Time=NULL),
-                          data=NULL, fitting=FALSE,cluster= NULL) {
+                          data=NULL, fitting=FALSE) {
   
   p <- c(free,fixed)
 
@@ -135,17 +135,17 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   #practice test
   init_mem <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
   init_thresh <- matrix(rbinom(mxn,p['nFeat'], p['theta']),nrow=p['nSim'],ncol=p['nList'])
-  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
+  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   #control no practice
   controlImmStrengths <- init_mem - matrix(rbinom(mxn, init_mem, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  controlImmAcc <- recall(controlImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  controlImmAcc <- recall(controlImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
 
   # study practice
   #imm
   restudyStrengths <- init_mem + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])
   restudyImmStrengths  <- restudyStrengths - matrix(rbinom(mxn,restudyStrengths, p['LR']),nrow=p['nSim'],ncol=p['nList'])
-  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   
   # test practice
   #copy strengths and thresholds from practice test 
@@ -157,7 +157,7 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   testStrengths[prac==TRUE] <- init_mem[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat']-init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmStrengths <- testStrengths - matrix(rbinom(p['nSim']*p['nList'],testStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
-  testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testImmAccPlus[prac==TRUE] <- testImmAcc[prac==TRUE]
   testImmAccNeg[prac==FALSE] <- testImmAcc[prac==FALSE]
   
@@ -167,7 +167,7 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   testOCImmThresh <- testThresh
   testOCImmAccPlus <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE) # careful, is of class Matrix, not matrix
   testOCImmAccNeg <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE)
-  testOCImmAcc<- recall(testOCImmStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  testOCImmAcc<- recall(testOCImmStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testOCImmAccPlus[prac==TRUE] <- testOCImmAcc[prac==TRUE] 
   testOCImmAccNeg[prac==FALSE] <- testOCImmAcc[prac==FALSE]
   
