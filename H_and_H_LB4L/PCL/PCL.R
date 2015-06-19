@@ -36,13 +36,8 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
                    data=NULL, fitting=FALSE, cluster = NULL) {
   
   p <- c(free,fixed)
-  #   print(free)
-#   pnames <- c("ER","LR","TR","F1","F2","Tmin","Tmax","lambda","theta","nFeat","nSim","nList", "Time")
-#   if (!all(pnames %in% names(p))) {
-#     stop(paste(pnames[!pnames %in% names(p)], " not specified in model,check model input list"))
-#   }
-  
-  if (any(p[c("ER","LR","TR","F1","F2","lambda","theta")] > 1) || any(p[c("ER","LR","TR","F1","F2","lambda","theta")] < 0)) {
+
+  if (any(p[names(p) %in% c("ER","LR","TR","F1","F2","theta")] > 1) || any(names(p) %in% c("ER","LR","TR","F1","F2","lambda","theta") < 0)) {
     err <- 100000
     return(err)
   } 
@@ -79,29 +74,41 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat']-init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmStrengths <- testStrengths - matrix(rbinom(p['nSim']*p['nList'],testStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  testImmAccPlus <- testImmAcc[prac==TRUE]
+  testImmAccNeg <- testImmAcc[prac==FALSE]
   #del
   testDelStrengths <- testStrengths - matrix(rbinom(mxn,testStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
   testDelAcc <- recall(testDelStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
+  testDelAccPlus <- testDelAcc[prac==TRUE]
+  testDelAccNeg <- testDelAcc[prac==FALSE]
   
   #no practice, other cue test practice
   #imm
   testOCImmStrengths <- controlImmStrengths
   testOCImmThresh <- testThresh
   testOCImmAcc <- recall(testOCImmStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)  
+  testOCImmAccPlus <- testOCImmAcc[prac==TRUE]
+  testOCImmAccNeg <- testOCImmAcc[prac==FALSE]
   #del
   testOCDelStrengths <-controlDelStrengths
   testOCDelAcc <- recall(testOCDelStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'], parallel=cluster)
-  
+  testOCDelAccPlus <- testOCDelAcc[prac==TRUE]
+  testOCDelAccNeg <- testOCDelAcc[prac==FALSE]
 
-  avgsImm <- lapply(list(prac=prac, chain1 = testOCImmAcc, chain2 = controlImmAcc, chain3= restudyImmAcc,chain5 = testImmAcc), mean)
-  avgsDel<- lapply(list(chain1 = testOCDelAcc, chain2 = controlDelAcc, chain3= restudyDelAcc,chain5 = testDelAcc), mean)
+  avgsImm <- lapply(list(prac=prac, chain1 = testOCImmAcc, chain1plus =  testOCImmAccPlus, chain1neg = testOCImmAccNeg,
+                         chain2 = controlImmAcc, chain3= restudyImmAcc,
+                         chain5 = testImmAcc, chain5plus= testImmAccPlus,chain5neg = testImmAccNeg), mean)
+  avgsDel<- lapply(list(chain1 = testOCDelAcc, chain1plus =  testOCImmAccPlus, chain1neg = testOCImmAccNeg,
+                        chain2 = controlDelAcc, chain3= restudyDelAcc,
+                        chain5 = testDelAcc, chain5plus= testDelAccPlus,chain5neg = testDelAccNeg ), mean)
   data$pred_acc[!is.na(data$acc) & data$timepoint ==1] <- avgsImm$prac
-  data$pred_acc[data$chain==1 & data$timepoint >1] <- c(avgsImm$chain1, avgsDel$chain1)
+  data[data$chain==1 & data$timepoint >1,c("pred_acc", "pred_acc_plus","pred_acc_neg")] <- c(avgsImm$chain1, avgsImm$chain1plus,avgsImm$chain1neg, 
+                                                                                             avgsDel$chain1,avgsDel$chain1plus,avgsDel$chain1plus)
   data$pred_acc[data$chain==2 & data$timepoint >1] <- c(avgsImm$chain2, avgsDel$chain2)
   data$pred_acc[data$chain==3 & data$timepoint >1] <- c(avgsImm$chain3, avgsDel$chain4)
-  data$pred_acc[data$chain==5 & data$timepoint >1] <- c(avgsImm$chain5, avgsDel$chain5)
-  
-  err <- g2(obs=data$acc[!is.na(data$acc)],pred=data$pred_acc[!is.na(data$acc)],N=15)
+  data[data$chain==5 & data$timepoint >1,c("pred_acc", "pred_acc_plus","pred_acc_neg")] <-c(avgsImm$chain5, avgsImm$chain5plus,avgsImm$chain5neg,
+                                                                                            avgsDel$chain5,avgsDel$chain5plus,avgsDel$chain5plus)
+  err <- g2(obs=data$acc[!is.na(data$acc)],pred=data$pred_acc[!is.na(data$acc)],N=15*length(data$acc[!is.na(data$acc)]))
   if (fitting) {
     return(err)
   } else {
@@ -119,7 +126,7 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
     stop(paste(pnames[!pnames %in% names(p)], " not specified in model,check model input list"))
   }
   
-  if (any(p[c("ER","LR","TR","F1","lambda","theta")] > 1) || any(p[c("ER","LR","TR","F1","lambda","theta")] < 0)) {
+  if (any(p[names(p) %in% c("ER","LR","TR","F1","theta")] > 1) || any(names(p) %in% c("ER","LR","TR","F1","lambda","theta") < 0)) {
     err <- 100000
     return(err)
   } 
