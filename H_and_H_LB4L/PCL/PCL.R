@@ -4,7 +4,7 @@ recallTime <- function(mem=NULL,thresh=NULL,Tmin=NULL,Tmax=NULL,Time=NULL,lambda
   return(recalled)
 }
 
-recallNoTime <- function(mem=NULL,thresh=NULL) {
+recallNoTime <- function(mem=NULL,thresh=NULL,...) {
   recalled <- mem > thresh
   return(recalled)
 } 
@@ -33,7 +33,8 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   if (any(p[names(p) %in% c("ER","LR","TR","F1","F2","theta")] > 1) || any(names(p) %in% c("ER","LR","TR","F1","F2","lambda","theta") < 0)) {
     err <- 100000
     return(err)
-  } 
+  }
+  set.seed(456)
   if (any(is.na(c(p["lambda"],p["Tmin"],p["Tmax"],p['Time'])))) {
     recall <- recallNoTime
   } else{
@@ -42,13 +43,14 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   mxn <-  p['nSim']*p['nList'] #dimensions precalculation 
   
   #practice test
-  init_mem <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
+  init_mem_C1 <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
+  init_mem_C2 <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
   init_thresh <- matrix(rbinom(mxn,p['nFeat'], p['theta']),nrow=p['nSim'],ncol=p['nList'])
-  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  prac <- recall(init_mem_C1,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   #control no practice
   #imm
-  controlImmStrengths <- init_mem - matrix(rbinom(mxn, init_mem, p['F1']),nrow=p['nSim'],ncol=p['nList'])
+  controlImmStrengths <- init_mem_C1 - matrix(rbinom(mxn, init_mem_C1, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   controlImmAcc <- recall(controlImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   #del
   controlDelStrengths <- controlImmStrengths - matrix(rbinom(mxn, controlImmStrengths, p['F2']),nrow=p['nSim'],ncol=p['nList'])
@@ -56,7 +58,7 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   
   # study practice
   #imm
-  restudyStrengths <- init_mem + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])
+  restudyStrengths <- init_mem_C1 + matrix(rbinom(mxn,p['nFeat']-init_mem_C1, p['LR']),nrow=p['nSim'],ncol=p['nList'])
   restudyImmStrengths  <- restudyStrengths - matrix(rbinom(mxn,restudyStrengths, p['LR']),nrow=p['nSim'],ncol=p['nList'])
   restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   #del
@@ -65,11 +67,11 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   
   # test practice
   #copy strengths and thresholds from practice test 
-  testStrengths <- init_mem 
+  testStrengths <- init_mem_C1 
   testThresh <- init_thresh
   #imm
-  testStrengths[prac==TRUE] <- init_mem[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
-  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat']-init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
+  testStrengths[prac==TRUE] <- init_mem_C1[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem_C1, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
+  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat'], p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmStrengths <- testStrengths - matrix(rbinom(p['nSim']*p['nList'],testStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testImmAccPlus <- testImmAcc[prac==TRUE]
@@ -82,7 +84,7 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   
   #no practice, other cue test practice
   #imm
-  testOCImmStrengths <- controlImmStrengths
+  testOCImmStrengths <- init_mem_C2 - matrix(rbinom(mxn, init_mem_C2, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   testOCImmThresh <- testThresh
   testOCImmAcc <- recall(testOCImmStrengths, testOCImmThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testOCImmAccPlus <- testOCImmAcc[prac==TRUE]
@@ -133,29 +135,30 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   mxn <-  p['nSim']*p['nList'] #dimensions precalculation 
   
   #practice test
-  init_mem <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
+  init_mem_C1 <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
+  init_mem_C2 <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
   init_thresh <- matrix(rbinom(mxn,p['nFeat'], p['theta']),nrow=p['nSim'],ncol=p['nList'])
-  prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  prac <- recall(init_mem_C1,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   #control no practice
-  controlImmStrengths <- init_mem - matrix(rbinom(mxn, init_mem, p['F1']),nrow=p['nSim'],ncol=p['nList'])
+  controlImmStrengths <- init_mem_C1 - matrix(rbinom(mxn, init_mem_C1, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   controlImmAcc <- recall(controlImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
 
   # study practice
   #imm
-  restudyStrengths <- init_mem + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])
+  restudyStrengths <- init_mem_C1 + matrix(rbinom(mxn,p['nFeat']-init_mem_C1, p['LR']),nrow=p['nSim'],ncol=p['nList'])
   restudyImmStrengths  <- restudyStrengths - matrix(rbinom(mxn,restudyStrengths, p['LR']),nrow=p['nSim'],ncol=p['nList'])
   restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   
   # test practice
   #copy strengths and thresholds from practice test 
-  testStrengths <- init_mem 
+  testStrengths <- init_mem_C1 
   testThresh <- init_thresh
   testImmAccPlus <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE) # careful, is of class Matrix, not matrix
   testImmAccNeg <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE)
   #imm
-  testStrengths[prac==TRUE] <- init_mem[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
-  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat']-init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
+  testStrengths[prac==TRUE] <- init_mem_C1[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem_C1, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
+  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat'], p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmStrengths <- testStrengths - matrix(rbinom(p['nSim']*p['nList'],testStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testImmAccPlus[prac==TRUE] <- testImmAcc[prac==TRUE]
@@ -163,7 +166,7 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   
   #no practice, other cue test practice
   #imm
-  testOCImmStrengths <- controlImmStrengths
+  testOCImmStrengths <- init_mem_C2 - matrix(rbinom(mxn, init_mem_C2, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   testOCImmThresh <- testThresh
   testOCImmAccPlus <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE) # careful, is of class Matrix, not matrix
   testOCImmAccNeg <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE)
