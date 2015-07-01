@@ -3,10 +3,10 @@ plotPCL <- function(model="std") {
   library(ggplot2)
   library(dplyr)
   library(boot)
-  
+  library(Matrix)
   if(.Platform$OS.type == "unix") {
     root <- Sys.getenv("HOME")
-    wd <- file.path("opt","source","RPmodels","H_and_H_LB4L","PCL")
+    wd <- file.path("/opt","source","RPmodels","H_and_H_LB4L","PCL")
   }   else if (.Platform$OS.type == "windows") {
     root <- Sys.getenv("USERPROFILE")
     wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","H_and_H_LB4L","PCL")
@@ -18,8 +18,8 @@ plotPCL <- function(model="std") {
     m <- fitPCL(model=model)
   } else {
     load(paste(model,"results.Rdata",sep="_"))
-    m <- tosave
-    rm(tosave)
+#     m <- tosave
+#     rm(tosave)
   }
   m$plots <- vector(mode='list',length=length(unique(m$data$subject)))
   params <- lapply(lapply(m$results, optimx:::coef.optimx),c)
@@ -68,7 +68,6 @@ plotPCL <- function(model="std") {
       scale_y_continuous("Accuracy", limits = c(0,1)) +
       mytheme
     m$plots[[1]][c("acc","cond_acc")] <- list(p1,p2)
-    return(m)
   } else {
     m$plots <- vector(mode='list',length=length(unique(m$data$subject))+1)
     m$aggPlots  <- list(acc =NULL,cond_acc = NULL)
@@ -151,9 +150,10 @@ plotPCL <- function(model="std") {
       scale_y_continuous("Accuracy", limits = c(0,1)) +
       mytheme    
     m$plots[[k]][c("accAgg","condAccAgg")] <- list(p1agg,p2agg)#  [c("acc","cond_acc")]]<- list(p1,p2)
-    return(m)
+    m$results[k] <- NULL
+    m$results[[k]] <- colMeans(do.call(rbind,m$results))
   }  
-    
+  return(m)
 }
 
 # plotSS <- function(df1,df2) { 
