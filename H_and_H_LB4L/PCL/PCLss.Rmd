@@ -1,0 +1,54 @@
+---
+title: "PCL by Subjects"
+output: 
+  html_document:
+    css: custom.css
+---
+
+```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
+library(knitr)
+library(pander)
+library(gridExtra)
+library(xtable)
+opts_chunk$set(echo = FALSE,fig.width=16,fig.height=7,cache=FALSE, 
+               warning=F, message=FALSE, fig.align='center')
+if(.Platform$OS.type == "unix") {
+ root <- Sys.getenv("HOME")
+ wd <- file.path("/opt","source","RPmodels","H_and_H_LB4L","PCL")
+}   else if (.Platform$OS.type == "windows") {
+ root <- Sys.getenv("USERPROFILE")
+ wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","H_and_H_LB4L","PCL")
+}
+source("plotPCL.R")
+m <- plotPCL("std_ss")
+```
+
+# Model Specs
+```{r modelSpecs,results='asis'}
+print(xtable(t(as.matrix(m$free)), digits=3,caption = paste("Starting Free Parameters")),
+      type = "html", include.rownames=FALSE, caption.placement="top")
+print(xtable(t(as.matrix(m$fix)), digits=3,caption = paste("Fixed Parameters")),
+      type = "html", include.rownames=FALSE, caption.placement="top")
+```
+
+# Model Results by Subject
+```{r subjectResults,results='asis'}
+for (i in 1:(length(m$plots)-1))  {
+  print(i)
+  grid.arrange(m$plots[[i]]$acc, m$plots[[i]]$cond_acc,ncol=2,nrow=1)
+  print(xtable(m$results[[i]], digits=3,
+               caption = paste("Best Parameters")),
+      type = "html", include.rownames=FALSE, caption.placement="top")
+#    '<br>'
+#    '<br>'
+}
+```
+
+# Averaged Results
+```{r averagedResults,results='asis'}
+grid.arrange(m$plots[[length(m$plots)]]$accAgg,m$plots[[length(m$plots)]]$condAccAgg)
+r <- m$results[[length(m$results)]]
+print(xtable(t(as.matrix(r[1:which(names(r)=='value')])), digits=3,
+               caption = paste("Average Parameters")),
+      type = "html", include.rownames=FALSE, caption.placement="top")
+```
