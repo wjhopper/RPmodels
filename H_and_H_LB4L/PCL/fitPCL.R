@@ -2,14 +2,13 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
   library(optimx)
   library(Matrix)
   is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
-  needed <- list("foreach","doParallel","doRNG")
+  needed <- list("foreach","doParallel")
   if (all(sapply(needed,is.installed))) {
-#     library(parallel)
     library(foreach)
     library(doParallel)
-#     library(doRNG)
     cl <- makeCluster(detectCores()-1)
     registerDoParallel(cl)
+#     library(doRNG)
 #     registerDoRNG(456)
     inpar = TRUE
   } else {
@@ -89,7 +88,7 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
       save(m,file=paste(names(models[model[k]]),"_results.Rdata",sep=''))
       k=k+1
   }
-  if (exists('cl')) {
+  if (inpar) {
     stopCluster(cl)
   }
   return(models[model])
