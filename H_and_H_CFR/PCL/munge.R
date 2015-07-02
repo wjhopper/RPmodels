@@ -1,4 +1,4 @@
-df <-read.csv('CFRss.csv')
+df <-read.csv('../CFRssRaw.csv')
 library(ggplot2)
 library(dplyr)
 dedup <- function(a,b) { 
