@@ -25,8 +25,10 @@ function pattern_complete_latency
     InitialThetas = zeros(Nsim,Nlist);
 
     % both learning and setting of thetas for each memory are binomial random
-    InitialMemory = increment(InitialMemory,Learn);
-    InitialThetas = increment(InitialThetas,Theta);
+%     InitialMemory = increment(InitialMemory,Learn);
+%     InitialThetas = increment(InitialThetas,Theta);
+    InitialMemory = double(dataset('File','mem.csv','Delimiter',','));
+    InitialThetas = double(dataset('File','theta.csv','Delimiter',','));
 
     % practice test performance
     [Baseline,BaselineRTs] = recall(InitialMemory,InitialThetas); 
