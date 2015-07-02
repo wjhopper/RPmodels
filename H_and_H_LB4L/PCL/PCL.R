@@ -71,7 +71,7 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1), fixed = c(Tmin=1, Tm
   testThresh <- init_thresh
   #imm
   testStrengths[prac==TRUE] <- init_mem_C1[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem_C1, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
-  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat'], p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
+  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmStrengths <- testStrengths - matrix(rbinom(p['nSim']*p['nList'],testStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testImmAccPlus <- testImmAcc[prac==TRUE]
@@ -158,7 +158,7 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.1, F1=.1), fixed = c(Tmin=1, Tmax=1
   testImmAccNeg <- Matrix(0,nrow=p['nSim'],ncol=p['nList'], sparse = TRUE)
   #imm
   testStrengths[prac==TRUE] <- init_mem_C1[prac==TRUE] + matrix(rbinom(mxn,p['nFeat']-init_mem_C1, p['LR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
-  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,p['nFeat'], p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
+  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - matrix(rbinom(mxn,init_thresh, p['TR']),nrow=p['nSim'],ncol=p['nList'])[prac==TRUE]
   testImmStrengths <- testStrengths - matrix(rbinom(p['nSim']*p['nList'],testStrengths, p['F1']),nrow=p['nSim'],ncol=p['nList'])
   testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   testImmAccPlus[prac==TRUE] <- testImmAcc[prac==TRUE]
