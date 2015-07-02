@@ -40,7 +40,7 @@ df3 <- df3 %>% group_by(class) %>%
 ggplot(df3,aes(x=time,y=D,color=class))+
   geom_line() +
   facet_grid(.~N) + 
-  scale_x_discrete(limits=c(0,70)) + 
+  scale_x_continuous(limits=c(0,70)) + 
   scale_color_discrete("Condition",labels=c("No Practice", "Study", "Test"))
 # df4 <- df2 %>% group_by(class,N) %>% 
 #   summarise(herp = n())
