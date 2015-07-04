@@ -3,6 +3,7 @@ title: "PCL by Subjects"
 output: 
   html_document:
     css: custom.css
+    toc: true
 ---
 
 ```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
@@ -46,9 +47,9 @@ for (i in 1:(length(m$plots)-1))  {
 
 # Averaged Results
 ```{r averagedResults,results='asis'}
-grid.arrange(m$plots[[length(m$plots)]]$accAgg,m$plots[[length(m$plots)]]$condAccAgg)
+grid.arrange(m$plots[[length(m$plots)]]$accAgg,m$plots[[length(m$plots)]]$condAccAgg,ncol=2,nrow=1)
 r <- m$results[[length(m$results)]]
-print(xtable(t(as.matrix(r[1:which(names(r)=='value')])), digits=3,
+print(xtable(as.matrix(r[1:which(names(r)=='value')]), digits=3,
                caption = paste("Average Parameters")),
       type = "html", include.rownames=FALSE, caption.placement="top")
 ```
