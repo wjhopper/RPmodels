@@ -2,7 +2,8 @@ fitPCL <- function(model=1,parforce=FALSE,...,debugLevel = 0) {
   library(optimx)
   is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
   needed <- list("foreach","doParallel")
-  if (all(sapply(needed,is.installed)) && parforce) {
+  packs <- all(sapply(needed,is.installed))
+  if (all(packs) && parforce) {
     library(foreach)
     library(doParallel)
     cl <- makeCluster(detectCores()-1)
@@ -10,9 +11,12 @@ fitPCL <- function(model=1,parforce=FALSE,...,debugLevel = 0) {
 #     library(doRNG)
 #     registerDoRNG(456)
     inpar = TRUE
-  } else {
+    } else if (!all(packs) && parforce) {
+    message("Packages foreach and doParallel not found to do parallel processing, falling back")
     inpar = FALSE
-  }
+    } else {
+    inpar = FALSE
+    }
   ## Set wd, depending on platform
   if (any(c(is.null(sys.call(-1)), if (!is.null(sys.call(-1))){!agrepl(as.character((sys.call(-1))),"plotPCL")}else{TRUE}))) {
     if(.Platform$OS.type == "unix") {
