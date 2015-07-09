@@ -32,6 +32,7 @@ plotPCL <- function(model="std") {
   }
   data <- do.call(rbind,tmp) #lapply(params,m$fcn, fixed=m$fix, data=m$data))
   data$chain <- factor(data$chain)
+  data$timepoint <- factor(data$timepoint)
   tmp <- melt(data, id.vars = c("subject","group","timepoint", "practice", "other_type","chain","n","nplus","nneg"), 
        measure.vars = c("acc","pred_acc","acc_plus","pred_acc_plus","acc_neg","pred_acc_neg"),
        value.name = 'pc')
@@ -46,7 +47,7 @@ plotPCL <- function(model="std") {
     m$plots <- vector(mode='list',length=1)
     p1 <- ggplot(df1,aes(x=timepoint,y=pc,color = chain,shape=variable)) + 
       geom_point(size =3) +
-      scale_x_discrete("Test (Nested within Group)",labels = c("Practice Test","Immediate Final Test","Delayed Final Test"),expand=c(0,.25)) + 
+      scale_x_discrete("Test",labels = c("Practice Test","Immediate Final Test","Delayed Final Test"),expand=c(0,.25)) + 
       scale_color_discrete("Condition",
                            labels = c("Test Practice with Cue 1,\nFinal Test with Unpracticed Cue 2",
                                       "No Practice with Cue 1,\nFinal Test with Cue 1",
@@ -66,6 +67,7 @@ plotPCL <- function(model="std") {
                         labels=c("Incorrect","Correct"),
                         palette="Set1") + 
       scale_y_continuous("Accuracy", limits = c(0,1)) +
+      ggtitle("Conditional Accuracy") + 
       mytheme
     m$plots[[1]][c("acc","cond_acc")] <- list(p1,p2)
   } else {
@@ -78,7 +80,7 @@ plotPCL <- function(model="std") {
     for (i in unique(m$data$subject)) {
       p1 <- ggplot(df1[df1$subject==i,],aes(x=timepoint,y=pc,color = chain,shape=variable)) + 
         geom_point(size =3) +
-        scale_x_discrete("Test (Nested within Group)",labels = c("Practice Test","Final Test"),expand=c(0,.25)) + 
+        scale_x_discrete("Test",labels = c("Practice Test","Final Test"),expand=c(0,.25)) + 
         scale_color_discrete("Condition",
                              labels = c("Test Practice with Cue 1,\nFinal Test with Unpracticed Cue 2",
                                         "No Practice with Cue 1,\nFinal Test with Cue 1",
@@ -97,6 +99,7 @@ plotPCL <- function(model="std") {
                           labels=c("Incorrect","Correct"),
                           palette="Set1") + 
         scale_y_continuous("Accuracy", limits = c(0,1)) +
+        ggtitle("Conditional Accuracy") + 
         mytheme
       m$plots[[k]][c("acc","cond_acc")] <- list(p1,p2)#  [c("acc","cond_acc")]]<- list(p1,p2)
       k=k+1
@@ -128,7 +131,7 @@ plotPCL <- function(model="std") {
     df2$variable <- factor(df2$variable,levels=c("acc_plus","acc_neg","pred_acc_plus","pred_acc_neg"))   
     p1agg <- ggplot(df1,aes(x=timepoint,y=pc,color = chain,shape=variable)) + 
       geom_point(size =3) +
-      scale_x_discrete("Test (Nested within Group)",labels = c("Practice Test","Immediate Final Test","Delayed Final Test"),expand=c(0,.25)) + 
+      scale_x_discrete("Test",labels = c("Practice Test","Immediate Final Test","Delayed Final Test"),expand=c(0,.25)) + 
       scale_color_discrete("Condition",
                            labels = c("Test Practice with Cue 1,\nFinal Test with Unpracticed Cue 2",
                                       "No Practice with Cue 1,\nFinal Test with Cue 1",
@@ -147,7 +150,8 @@ plotPCL <- function(model="std") {
                         limits=c('acc_neg','acc_plus'), 
                         labels=c("Incorrect","Correct"),
                         palette="Set1") + 
-      scale_y_continuous("Accuracy", limits = c(0,1)) +
+      scale_y_continuous("Accuracy", limits = c(0,1)) +      
+      ggtitle("Conditional Accuracy") + 
       mytheme    
     m$plots[[k]][c("accAgg","condAccAgg")] <- list(p1agg,p2agg)#  [c("acc","cond_acc")]]<- list(p1,p2)
     m$results[k] <- NULL
