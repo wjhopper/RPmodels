@@ -34,11 +34,11 @@ print(xtable(t(as.matrix(m$fix)), digits=3,caption = paste("Fixed Parameters")),
 
 # Model Results by Subject
 ```{r subjectResults,results='asis'}
+sList <- unique(m$data$subject)
 for (i in 1:(length(m$plots)-1))  {
-  print(i)
   grid.arrange(m$plots[[i]]$acc, m$plots[[i]]$cond_acc,ncol=2,nrow=1)
-  print(xtable(m$results[[i]], digits=3,
-               caption = paste("Best Parameters")),
+  print(xtable(data.frame(Subject = sList[i],Group = m$data$group[m$data$subject==sList[i]][1],m$results[[i]]),
+               digits=3, caption = paste("Best Parameters")),
       type = "html", include.rownames=FALSE, caption.placement="top")
 #    '<br>'
 #    '<br>'

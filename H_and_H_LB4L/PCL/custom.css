@@ -16,14 +16,16 @@
   padding-left: 20px;
 }
 
-body {
+/*body {
   margin-left:200px;
   line-height: 20px;
 }
-
+*/
 body .main-container { 
-  max-width: 1600px; 
   padding: 0px;
+  line-height: 20px;
+  margin-left: 12.5%;
+  max-width: inherit;
 }
 
 h1.title {
