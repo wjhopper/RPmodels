@@ -1,9 +1,8 @@
-fitPCL <- function(model=1,...,debugLevel = 0) {
+fitPCL <- function(model=1,parforce=FALSE,...,debugLevel = 0) {
   library(optimx)
-  library(Matrix)
   is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
   needed <- list("foreach","doParallel")
-  if (all(sapply(needed,is.installed))) {
+  if (all(sapply(needed,is.installed)) && parforce) {
     library(foreach)
     library(doParallel)
     cl <- makeCluster(detectCores()-1)
@@ -13,7 +12,6 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
     inpar = TRUE
   } else {
     inpar = FALSE
-    
   }
   ## Set wd, depending on platform
   if (any(c(is.null(sys.call(-1)), if (!is.null(sys.call(-1))){!agrepl(as.character((sys.call(-1))),"plotPCL")}else{TRUE}))) {
@@ -26,14 +24,17 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
     }
     setwd(wd)
   }
+  if (debugLevel[1] == 2) {
+    setBreakpoint('PCL.R', line=debugLevel[2])
+  }
   source('PCL.R')
   data <- cbind(read.csv(file.path('..','group_means.csv')),pred_acc = NA,pred_acc_plus= NA,pred_acc_neg= NA,subject=9999)
   SS_data <- cbind(read.csv(file.path('..','cond_means_by_ss.csv')),pred_acc = NA,pred_acc_plus= NA,pred_acc_neg= NA)
   
-  models <- list('std' = list(fcn = PCL, free= c(ER=.58,LR=.07,TR =.1, F1=.1,F2=.1),
+  models <- list('std' = list(fcn = PCL, free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1),
                                    fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=data,
                                    low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(data$subject)))), 
-                 'std_ss' = list(fcn = PCLss, free= c(ER=.58,LR=.07,TR =.1, F1=.1),
+                 'std_ss' = list(fcn = PCLss, free= c(ER=.53,LR=.07,TR =.4, F1=.1),
                                    fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=SS_data,
                                    low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))))
   for (i in model) {
@@ -45,17 +46,13 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
     }
   }
     
-  if (debugLevel[1] == 2) {
-    setBreakpoint('PCL.R', line=debugLevel[2])
-  }
+
   k=1
   if (debugLevel[1] == 0 || debugLevel[1]==2 ) {
     if (inpar) {
       clusterExport(cl,c("recallNoTime","recallTime","LL","g2"))
-#       .export=ls(envir=globalenv())
       results <- foreach(m=models[model]) %:%
-        foreach(j =unique(m$data$subject),.verbose=T,.packages=c("optimx","Matrix")) %dopar% {
-#           m$fcn(m$free,fixed=m$fix,data=m$data[m$data$subject ==j,], fitting=TRUE)
+        foreach(j =unique(m$data$subject),.verbose=T,.packages=c("optimx")) %dopar% {
           optimx(par=m$free, fn = m$fcn, method = "Nelder-Mead",lower=m$low, upper=m$up,
                  fixed=m$fix, data=m$data[m$data$subject ==j,], fitting=TRUE)
         }
@@ -63,21 +60,22 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
         m <- model[i]
         models[[m]]$results <- results[[i]]
       }
-      } else {
-          for (i in model) {
-            for (j in unique(models[[i]]$data$subject)) {
-              a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
-                          fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE)
-              models[[i]]$results[[k]] <- a
-              k=k+1
-            }
+    } else {
+        for (i in model) {
+          for (j in unique(models[[i]]$data$subject)) {
+            message(paste("Fitting subject", j))
+            a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
+                        fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE)
+            models[[i]]$results[[k]] <- a
+            k=k+1
           }
+        }
       }
   } else if (debugLevel[1] == 1) {
     for (i in model) {
       for (j in unique(models[[i]]$data$subject)) {
         message(paste("Fitting Subject", j, ": model", names(models[i])))
-        res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=FALSE, cluster=cl)
+        res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=FALSE)
         models[[i]]$results[[k]] <- res
         k=k+1
       }
