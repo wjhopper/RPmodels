@@ -9,3 +9,5 @@ MatlabServer.m
 InputStreamByteWrapper.class
 subfits.csv
 aggfits.csv
+.Rproj.user
+parlog.txt
