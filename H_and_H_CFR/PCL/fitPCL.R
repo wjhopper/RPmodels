@@ -1,18 +1,24 @@
-fitPCL <- function(model=1,...,debugLevel = 0) {
+fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
   library(optimx)
-  library(Matrix)
+  library(dplyr)
+  library(reshape2)
   is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
-  needed <- list("foreach","doParallel","doRNG")
-  if (all(sapply(needed,is.installed))) {
-    library(foreach)
-    library(doParallel)
-    cl <- makeCluster(detectCores()-1)
-    registerDoParallel(cl)
-    inpar = TRUE
-  } else {
-    inpar = FALSE
-  }
-  
+  needed <- list("foreach","doParallel")
+
+  if (inpar) {
+    packs <- all(sapply(needed,is.installed))
+    if (all(packs)) {
+      library(foreach)
+      library(doParallel)
+      cl <- makeCluster(detectCores()-1)
+      registerDoParallel(cl)
+      #     library(doRNG)
+      #     registerDoRNG(456)
+    } else {
+      message("Packages foreach and doParallel not found to do parallel processing, falling back")
+      inpar = FALSE
+    }
+  } 
   ## Set wd, depending on platform
   if (any(c(is.null(sys.call(-1)), if (!is.null(sys.call(-1))){!agrepl(as.character((sys.call(-1))),"plotPCL")}else{TRUE}))) {
     if(.Platform$OS.type == "unix") {
@@ -26,23 +32,25 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
   }
   source('PCL.R')
   SS_data <- cbind(read.csv(file.path('..','CFRss.csv')),pred_acc = NA,pred_acc_plus= NA,pred_acc_neg= NA)
+  SS_data <- filter(SS_data,!is.na(order))
+  SS_data$RTrounded <- round(SS_data$RT,1)
   
   models <- list('ss_std' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Tmin=2,Tmax=10,Time=90), 
+                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90), 
                                  yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))),
+                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
                  'ss_yoke1' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Tmin=2,Tmax=10,Time=90),
+                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90),
                                  yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))),
+                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
                  'ss_yoke2' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Tmin=2,Tmax=10,Time=90),
+                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90),
                                  yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))),
+                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
                  'ss_yoke3' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Tmin=2,Tmax=10,Time=90),
+                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90),
                                  yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))))
+                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))))
   for (i in model) {
     reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))
     reqParams <- reqParams[!reqParams %in%  c("","Tmin","Tmax","lambda")]
@@ -52,29 +60,31 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
     }
   }
   
-  if (debugLevel[1] == 2) {
-    setBreakpoint('PCL.R', line=debugLevel[2])
-  }
+  
   k=1
   if (debugLevel[1] == 0 || debugLevel[1]==2 ) {
     if (inpar) {
-      clusterExport(cl,c("recallNoTime","recallTime","LL","g2"))
-      #       .export=ls(envir=globalenv())
-      results <- foreach(m=models[model]) %:%
-        foreach(j =unique(m$data$subject),.verbose=T,.packages=c("optimx","Matrix")) %dopar% {
-          #           m$fcn(m$free,fixed=m$fix,data=m$data[m$data$subject ==j,], fitting=TRUE)
+      writeLines(paste('[',Sys.time(),']',"INIT parlog"), con=file.path(wd,"parlog.txt"),sep='\n')
+      clusterExport(cl,c("recall","LL","RTdis"))
+      results <- foreach(m=models[model],export="wd") %:%
+        foreach(j =unique(m$data$sub_num),.verbose=T,.packages=c("dplyr","optimx","reshape2")) %dopar% {
+          sink(file.path(wd,"parlog.txt"), append=TRUE)
+          cat(paste("Fitting subject", j,"\n"))
           optimx(par=m$free, fn = m$fcn, method = "Nelder-Mead",lower=m$low, upper=m$up,
-                 fixed=m$fix, data=m$data[m$data$subject ==j,], fitting=TRUE)
+                 fixed=m$fix, data=m$data[m$data$sub_num ==j,], fitting=TRUE)
         }
       for (i in 1:length(results)){
         m <- model[i]
         models[[m]]$results <- results[[i]]
       }
+      stopCluster(cl)
+      cat(paste('[',Sys.time(),']',"Finished Fitting, Goodbye"))
     } else {
       for (i in model) {
-        for (j in unique(models[[i]]$data$subject)) {
+        for (j in unique(models[[i]]$data$sub_num)) {
+          message(paste("Fitting subject", j))
           a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
-                      fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=TRUE)
+                      fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$sub_num ==j,], fitting=TRUE)
           models[[i]]$results[[k]] <- a
           k=k+1
         }
@@ -82,9 +92,9 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
     }
   } else if (debugLevel[1] == 1) {
     for (i in model) {
-      for (j in unique(models[[i]]$data$subject)) {
-        message(paste("Fitting Subject", j, ": model", names(models[i])))
-        res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$subject ==j,], fitting=FALSE, cluster=cl)
+      for (j in unique(models[[i]]$data$sub_num)) {
+        message(paste("Testing Subject", j, ": model", names(models[i])))
+        res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$sub_num ==j,], fitting=FALSE)
         models[[i]]$results[[k]] <- res
         k=k+1
       }
@@ -95,8 +105,6 @@ fitPCL <- function(model=1,...,debugLevel = 0) {
     save(m,file=paste(names(models[model[k]]),"_results.Rdata",sep=''))
     k=k+1
   }
-  if (exists('cl')) {
-    stopCluster(cl)
-  }
+
   return(models[model])
 }
