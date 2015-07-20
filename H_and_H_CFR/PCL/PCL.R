@@ -75,9 +75,20 @@ PCL <- function(free= c(ER=.53,LR=.1,TR =.05, FR=.05), fixed = c(Tmin=2, Tmax=10
   test <- recall(testStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   test$dist <- RTdis(test$RT,p['Time']) 
   
-  avgs <- lapply(list(prac=prac$Acc, restudy = restudy$Acc, test = test$Acc), mean)
-  preds <- data.frame(class = rep(c('np','sp','tp'),each=nrow(prac$dist)),
+  dist <- data.frame(class = rep(c('np','sp','tp'),each=nrow(prac$dist)),
                       rbind(prac$dist, restudy$dist, test$dist))
-  err <- LL(obs=data[,c("class","order","RTrounded")],pred = preds)
-  return(err)
+  err <- LL(obs=data[,c("class","order","RTrounded")],pred = dist)
+  if (fitting) {
+    return(err)
+  } else {
+    acc <- melt(rbind(prac$Acc,restudy$Acc,test$Acc),
+                varnames=c("class","order"),value.name = "pred_acc")
+    RT <- melt(do.call(rbind,list(np=prac$RT, sp = restudy$RT, tp = test$RT)),
+               varnames=c("class","order"),value.name = "pred_RT")
+    CRT <- melt(do.call(rbind,list(np=prac$CRT, sp = restudy$CRT, tp = test$CRT)),
+                varnames=c("class","order"),value.name = "pred_CRT")
+    preds <- data.frame(subject = data$sub_num[1],Reduce(inner_join,list(acc,RT,CRT)))
+    preds$class <- rep(rep(c("np","sp","tp"),each = nrow(prac$Acc)),ncol(prac$Acc))
+    return(list(err=err,preds=preds,dist = dist))
+  }
 }
