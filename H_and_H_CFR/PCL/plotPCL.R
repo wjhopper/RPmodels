@@ -1,4 +1,4 @@
-plotPCL <- function(model="ss_std") {
+plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   library(reshape2)
   library(ggplot2)
   library(dplyr)
@@ -117,4 +117,10 @@ plotPCL <- function(model="ss_std") {
     m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot))
   }
   save(m,file = paste(model,"results.Rdata",sep="_"))
+  if (plotListOnly = TRUE) {
+    return(m$plots)
+  } else {
+    return(m)
+  }
+
 }
