@@ -2,8 +2,21 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   library(reshape2)
   library(ggplot2)
   library(dplyr)
-  library(boot)
-  library(Matrix)
+
+  classNames <- list(
+    'np'="No Practice",
+    'sp'="Study Practice",
+    'tp'="Test Practice"
+  )  
+  
+  classLabeller <- function(variable,value) {        
+    if (variable=='class') {
+      return(classNames[value])
+    } else {
+      return(value)
+    }
+  }
+  
   if(.Platform$OS.type == "unix") {
     root <- Sys.getenv("HOME")
     wd <- file.path("/opt","source","RPmodels","H_and_H_CFR","PCL")
@@ -35,7 +48,8 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   preds <- do.call(rbind,lapply(tmp,`[[`,2)) 
   
   # munge the data into shape
-  names(m$data) <- c("subject",names(m$data)[-1])
+  oldNames <- names(m$data)
+  names(m$data) <- c("subject", oldNames[-1])
 #   levels(preds$class) <- list(np = "prac", sp = "restudy", tp = "test")
   m$data$order[m$data$order==16] <- 14 # workaround for now
   m$data[,c("subject","class","order")] <- lapply(m$data[,c("subject","class","order")],factor)
@@ -60,7 +74,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
         geom_line(aes(y=medianRT,group=class)) +
         geom_point(aes(y=pred_medianRT,shape="model")) +
         geom_line(aes(y=pred_medianRT,group=class)) + 
-        facet_grid(. ~ class) +
+        facet_grid(. ~ class,labeller = classLabeller) +
         scale_x_discrete("Output Item") + 
         scale_y_continuous("Median First Press RT") +
         scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Data","PCL")) + 
@@ -72,7 +86,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
         geom_line(aes(y=acc,group=class)) +
         geom_point(aes(y=pred_acc,shape="model")) +
         geom_line(aes(y=pred_acc,group=class)) + 
-        facet_grid(. ~ class) +
+        facet_grid(. ~ class,labeller = classLabeller) +
         scale_x_discrete("Output Item") + 
         scale_y_continuous("Accuracy") +
         scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Data","PCL")) + 
@@ -98,7 +112,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
     aggRTPlot <- ggplot(data =aggData,aes(x=order,y=medianRT,shape=type)) +
       geom_point() +
       geom_line(aes(group=interaction(class,type))) +
-      facet_grid(. ~ class) +
+      facet_grid(. ~ class,labeller = classLabeller) +
       scale_x_discrete("Output Item") + 
       scale_y_continuous("Median First Press RT") +
       # scale_shape_manual() + 
@@ -108,16 +122,18 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
     aggAccPlot <- ggplot(data =aggData,aes(x=order,y=acc,shape=type)) +
       geom_point() +
       geom_line(aes(group=interaction(class,type))) +
-      facet_grid(. ~ class) +
+      facet_grid(. ~ class,labeller = classLabeller) +
       scale_x_discrete("Output Item") + 
       scale_y_continuous("Accuracy") +
       # scale_shape_manual("",labels=c("Data","PCL")) + 
       mytheme + 
-      ggtitle("Data vs. PCL: Agg. Median RT")
+      ggtitle("Data vs. PCL: Accuracy")
     m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot))
   }
+  names(m$data) <- oldNames
+  m$data$order <- as.numeric(levels(m$data$order))[m$data$order]
   save(m,file = paste(model,"results.Rdata",sep="_"))
-  if (plotListOnly = TRUE) {
+  if (plotListOnly) {
     return(m$plots)
   } else {
     return(m)
