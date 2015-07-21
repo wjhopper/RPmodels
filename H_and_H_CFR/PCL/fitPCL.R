@@ -45,6 +45,10 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
                                  fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90), 
                                  yoke = NULL,data=SS_data,
                                  low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
+                 'ss_timeFree' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05,Tmin=2,Tmax=10,lambda=.2),
+                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=90), 
+                                 yoke = NULL,data=SS_data,
+                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
                  'ss_yoke1' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
                                  fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90),
                                  yoke = NULL,data=SS_data,
@@ -81,7 +85,7 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
       models[[m]]$results <- results[[i]]
     }
     stopCluster(cl)
-    cat(paste('[',Sys.time(),']',"Finished Fitting, Goodbye"))
+    cat(paste('[',Sys.time(),']',"Finished Fitting, Goodbye"),con=file.path(wd,"parlog.txt"),sep='\n')
   } else {
     k=1
     for (i in model) {
