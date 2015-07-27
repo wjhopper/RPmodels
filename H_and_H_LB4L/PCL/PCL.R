@@ -167,7 +167,7 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03), fixed = c(Tmin
   testOCImmAcc<- recall(testOCImmStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   #compute predictions
   avgs <- lapply(list(prac=prac,
-                      chain1 = testOCImmAcc, chain1plus = testOCImmAcc[!prac],chain1neg = testOCImmAcc[!prac], 
+                      chain1 = testOCImmAcc, chain1plus = testOCImmAcc[prac],chain1neg = testOCImmAcc[!prac], 
                       chain1_prac_final = (prac & testOCImmAcc),
                       chain1_prac_not_final = (prac & !testOCImmAcc),
                       chain1_not_prac_final = (!prac & testOCImmAcc),
