@@ -1,55 +1,38 @@
 ---
-title: "PCL by Subjects"
+title: "PCL by Subjects: LB4L Dataset"
 output: 
   html_document:
     css: custom.css
     toc: true
+    toc_depth: 2
 ---
 
-```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
+```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE  }
 library(knitr)
-library(pander)
-library(gridExtra)
-library(xtable)
-opts_chunk$set(echo = FALSE,fig.width=16,fig.height=7,cache=FALSE, 
-               warning=F, message=FALSE, fig.align='center')
-if(.Platform$OS.type == "unix") {
- root <- Sys.getenv("HOME")
- wd <- file.path("/opt","source","RPmodels","H_and_H_LB4L","PCL")
-}   else if (.Platform$OS.type == "windows") {
- root <- Sys.getenv("USERPROFILE")
- wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","H_and_H_LB4L","PCL")
-}
-source("plotPCL.R")
-m <- plotPCL("std_ss")
+model <- 'std_ss'
+read_chunk(file.path(getwd(),'chunks.R'))
+```
+
+```{r envSetup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE }
+```
+
+```{r drawPlots, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE  }
+m <- plotPCL(model)
 ```
 
 # Model Specs
-```{r modelSpecs,results='asis'}
-print(xtable(t(as.matrix(m$free)), digits=3,caption = paste("Starting Free Parameters")),
-      type = "html", include.rownames=FALSE, caption.placement="top")
-print(xtable(t(as.matrix(m$fix)), digits=3,caption = paste("Fixed Parameters")),
-      type = "html", include.rownames=FALSE, caption.placement="top")
+```{r model, results='asis'}
+<<modelInfo>>
+modelInfo(m)
 ```
-
 # Model Results by Subject
-```{r subjectResults,results='asis'}
-sList <- unique(m$data$subject)
-for (i in 1:(length(m$plots)-1))  {
-  grid.arrange(m$plots[[i]]$acc, m$plots[[i]]$cond_acc,ncol=2,nrow=1)
-  print(xtable(data.frame(Subject = sList[i],Group = m$data$group[m$data$subject==sList[i]][1],m$results[[i]]),
-               digits=3, caption = paste("Best Parameters")),
-      type = "html", include.rownames=FALSE, caption.placement="top")
-#    '<br>'
-#    '<br>'
-}
+```{r subject,results='asis'}
+<<subjectResults>>
+subjectResults(m)
 ```
 
 # Averaged Results
-```{r averagedResults,results='asis'}
-grid.arrange(m$plots[[length(m$plots)]]$accAgg,m$plots[[length(m$plots)]]$condAccAgg,ncol=2,nrow=1)
-r <- m$results[[length(m$results)]]
-print(xtable(as.matrix(r[1:which(names(r)=='value')]), digits=3,
-               caption = paste("Average Parameters")),
-      type = "html", include.rownames=FALSE, caption.placement="top")
+```{r averages,results='asis'}
+<<subjectAverages>>
+  subjectAverages(m)
 ```
