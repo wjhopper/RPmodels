@@ -32,11 +32,11 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   } else {
     load(paste(model,"results.Rdata",sep="_"))
   }
-  m$plots <- vector(mode='list',length=length(unique(m$data$subject)))
+  m$plots <- vector(mode='list',length=length(unique(m$data$sub_num)))
   if (any(class(m$results[[1]])=="optimx")) {
     params <- lapply(lapply(m$results, optimx:::coef.optimx),c)
     params <- lapply(params, setNames, colnames(optimx:::coef.optimx(m$results[[1]])))
-    tmp <- vector(mode='list',length(unique(m$data$subject)))
+    tmp <- vector(mode='list',length(unique(m$data$sub_num)))
     k=1
     for (i in unique(m$data$sub_num)) {
       tmp[[k]] <-m$fcn(free=params[[k]],fixed=m$fix,data=m$data[m$data$sub_num==i,])
@@ -48,28 +48,24 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   preds <- do.call(rbind,lapply(tmp,`[[`,2)) 
   
   # munge the data into shape
-  oldNames <- names(m$data)
-  names(m$data) <- c("subject", oldNames[-1])
-#   levels(preds$class) <- list(np = "prac", sp = "restudy", tp = "test")
-  m$data$order[m$data$order==16] <- 14 # workaround for now
-  m$data[,c("subject","class","order")] <- lapply(m$data[,c("subject","class","order")],factor)
-  preds[,c("subject","class","order")] <- lapply(preds[,c("subject","class","order")],factor)
+  m$data[,c("sub_num","class","order")] <- lapply(m$data[,c("sub_num","class","order")],factor)
+  preds[,c("sub_num","class","order")] <- lapply(preds[,c("sub_num","class","order")],factor)
   
-  if (length(unique(preds$subject))>1) {
-    median_data <- m$data %>% group_by(subject,class,order) %>% 
+  if (length(unique(preds$sub_num))>1) {
+    median_data <- m$data %>% group_by(sub_num,class,order) %>% 
       summarise(acc = sum(score)/4,
                 medianRT = median(RT),
                 medianCRT = median(CRT))
-    median_preds <- preds %>% group_by(subject,class,order) %>% 
+    median_preds <- preds %>% group_by(sub_num,class,order) %>% 
       summarise(pred_acc = mean(pred_acc),
                 pred_medianRT = median(pred_RT),
                 pred_medianCRT = median(pred_CRT))
     sub_data <- left_join(median_preds,median_data)
     sub_data$acc[is.na(sub_data$acc)] <- 0 # set na's for accuracy for zeros
-    # data <- melt(data,id.vars=c("subject","class","order"),factorsAsStrings = TRUE)
+
     k <- 1
-    for (i in unique(sub_data$subject)) {
-      rtPlot <- ggplot(data =sub_data[sub_data$subject==i,],aes(x=order)) +
+    for (i in unique(sub_data$sub_num)) {
+      rtPlot <- ggplot(data =sub_data[sub_data$sub_num==i,],aes(x=order)) +
         geom_point(aes(y=medianRT,shape="data")) +
         geom_line(aes(y=medianRT,group=class)) +
         geom_point(aes(y=pred_medianRT,shape="model")) +
@@ -81,7 +77,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
         mytheme + 
         ggtitle("Data vs. PCL: Median RT")
       
-      accPlot <- ggplot(data =sub_data[sub_data$subject==i,],aes(x=order)) +
+      accPlot <- ggplot(data =sub_data[sub_data$sub_num==i,],aes(x=order)) +
         geom_point(aes(y=acc,shape="data")) +
         geom_line(aes(y=acc,group=class)) +
         geom_point(aes(y=pred_acc,shape="model")) +
@@ -97,7 +93,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
       k=k+1
     }
     aggData <- m$data %>% group_by(class,order) %>% 
-      summarise(acc = sum(score)/(length(unique(subject))*4),
+      summarise(acc = sum(score)/(length(unique(sub_num))*4),
                 medianRT = median(RT),
                 medianCRT = median(CRT))
     aggData$acc[is.na(aggData$acc)] <- 0 
@@ -130,7 +126,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
       ggtitle("Data vs. PCL: Accuracy")
     m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot))
   }
-  names(m$data) <- oldNames
+
   m$data$order <- as.numeric(levels(m$data$order))[m$data$order]
   save(m,file = paste(model,"results.Rdata",sep="_"))
   if (plotListOnly) {

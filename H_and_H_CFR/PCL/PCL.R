@@ -84,7 +84,7 @@ PCL <- function(free= c(ER=.53,LR=.1,TR =.05, FR=.05), fixed = c(Tmin=2, Tmax=10
                varnames=c("class","order"),value.name = "pred_RT")
     CRT <- melt(do.call(rbind,list(np=prac$CRT, sp = restudy$CRT, tp = test$CRT)),
                 varnames=c("class","order"),value.name = "pred_CRT")
-    preds <- data.frame(subject = data$sub_num[1],Reduce(inner_join,list(acc,RT,CRT)))
+    preds <- data.frame(sub_num = data$sub_num[1],Reduce(inner_join,list(acc,RT,CRT)))
     preds$class <- rep(rep(c("np","sp","tp"),each = nrow(prac$Acc)),ncol(prac$Acc))
     return(list(err=err,preds=preds,dist = dist))
   }
