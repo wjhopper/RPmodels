@@ -9,7 +9,6 @@ output:
 
 ```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
 library(knitr)
-library(pander)
 library(gridExtra)
 library(xtable)
 library(ggplot2)

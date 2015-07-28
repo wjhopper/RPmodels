@@ -9,9 +9,9 @@ output:
 
 ```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE}
 library(knitr)
-library(pander)
 library(gridExtra)
 library(xtable)
+library(ggplot2)
 opts_chunk$set(echo = FALSE,fig.width=16,fig.height=7,cache=FALSE, 
                warning=F, message=FALSE, fig.align='center')
 if(.Platform$OS.type == "unix") {
@@ -52,8 +52,7 @@ for (i in 1:(length(m$plots)-1))  {
   print(xtable(data.frame(Subject = sList[i],m$results[[i]]),
                digits=3, caption = paste("Best Parameters")),
       type = "html", include.rownames=FALSE, caption.placement="top")
-#    '<br>'
-#    '<br>'
+
 }
 ```
 

@@ -91,7 +91,6 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
     for (i in model) {
       for (j in unique(models[[i]]$data$sub_num)) {
         message(paste("Fitting subject", j))
-#         res <- models[[i]]$fcn(free=models[[i]]$free,fixed=models[[i]]$fix,data=models[[i]]$data[models[[i]]$data$sub_num ==j,], fitting=FALSE)
         a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
                     fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$sub_num ==j,], fitting=TRUE)
         models[[i]]$results[[k]] <- a
