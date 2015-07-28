@@ -1,0 +1,4 @@
+ html_document:
+  css: custom.css
+  toc: true
+  toc_depth: 2
