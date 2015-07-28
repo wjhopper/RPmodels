@@ -83,7 +83,7 @@ function pattern_complete_latency
         [val,ind]=sort(mem,2,'descend'); % sampling goes in decreasing memory strength order (not random)
         % because thetas are random, decreasing strength does not gaurantee rank ordering of recoverability
         
-        Recoverable=mem>thetas;  % only above threshold memories are recoverable   
+%         Recoverable=mem>thetas;  % only above threshold memories are recoverable   
         
         RT=Tmin + (Tmax-Tmin).*exp(-lambda.*abs(mem-thetas)); % time to recovery (or fail to recover) each memory
         
@@ -93,9 +93,10 @@ function pattern_complete_latency
             thetasim=thetas(s,:);
             
             [val,ind]=sort(memsim,'descend'); % rank based on number of features encoded
-            
-            RankedTotRT=cumsum(RTsim(ind));  % find cumulative latency based on ranking, regardless of recoverability
+            sortedRTs = RTsim(ind);
+            RankedTotRT=cumsum(sortedRTs);  % find cumulative latency based on ranking, regardless of recoverability
             TotRT=RankedTotRT(ind);             % convert back to unordered list
+            originalRT = sortedRTs(ind); %#ok<NASGU>
             TotRT(memsim<thetasim)=TestTime; % if unrecoverable, set time to end of test period
             TotRT(TotRT>TestTime)=TestTime; % if total time greater than test period, set equal to end of test period
             
