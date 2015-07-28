@@ -126,6 +126,9 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
       ggtitle("Data vs. PCL: Accuracy")
     m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot))
   }
+  
+  m$results[k] <- NULL
+  m$results[[k]] <- do.call(rbind,m$results) %>% summarise_each(funs(mean))
 
   m$data$order <- as.numeric(levels(m$data$order))[m$data$order]
   save(m,file = paste(model,"results.Rdata",sep="_"))
