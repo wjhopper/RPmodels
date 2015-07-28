@@ -37,9 +37,18 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
     setBreakpoint('PCL.R', debugLevel[2], envir = fitPCL)
   }
   
-  SS_data <- cbind(read.csv(file.path('..','CFRss.csv')),pred_acc = NA,pred_acc_plus= NA,pred_acc_neg= NA)
-  SS_data <- filter(SS_data,!is.na(order))
-  SS_data$RTrounded <- round(SS_data$RT,1)
+  SS_data <- cbind(read.csv(file.path('..','CFRssRaw.csv')),pred_acc = NA,
+                   pred_acc_plus= NA,pred_acc_neg= NA) %>% 
+    group_by(sub_num) %>% 
+    mutate(abs_list =rep(1:12,as.vector(table(list,phase)[,2:1][table(list,phase)[,2:1]>0]))) %>% 
+    group_by(sub_num, abs_list)   %>% 
+    filter(score == 1 ) %>%
+    mutate(CRT = cumsum(RT),
+           RTrounded = round(RT,1),
+           order = 1:n(),
+           Nrecalled = sum(score)) %>% 
+    arrange(desc(phase),practice) # dont need to arrange by subject since the data frame is grouped by it
+  # SS_data[,c('sub_num','class')] <- lapply(SS_data[,c('sub_num','class')],factor)
   
   models <- list('ss_std' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
                                  fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90), 

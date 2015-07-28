@@ -140,3 +140,26 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   }
 
 }
+
+
+empDensityPlot <- function(data=NULL) {
+  dataFull <-expand.grid(class=levels(data$class), order= levels(factor(data$order)),
+                         time = seq(.1,90,.1),density=NA)
+  for (i in unique(dataFull$class)) {
+    for(j in unique(dataFull$order)) {
+      D <- density(data$CRT[data$class==i & data$order==j],bw=1,n=900,from=.1,to=90)$y
+      D <-D/sum(D)
+      D<-(sum(data$class==i & data$order==j)/(34*4)) * D
+      dataFull$density[dataFull$class==i & dataFull$order==j] <- D
+    }
+  }
+  dataFull <- dataFull %>% group_by(class) %>% 
+    mutate(densityNormalized = density/sum(density))
+  
+  densityPlot <- ggplot(dataFull,aes(x=time,y=densityNormalized,color=class))+
+    geom_line() +
+    facet_grid(.~order) + 
+    scale_x_continuous(limits=c(0,max(data$CRT+5))) + 
+    scale_color_discrete("Condition",labels=c("No Practice", "Study", "Test"))
+  return(densityPlot)
+}
