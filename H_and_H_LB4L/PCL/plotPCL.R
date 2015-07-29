@@ -181,7 +181,7 @@ plotPCL <- function(model="std") {
       scale_color_discrete("Practice Method",labels = c("No Practice", "Restudy Practice","Cued Recall Practice")) + 
       ylab("Final Test Accuracy") + 
       mytheme +
-      ggtitle('Final Cued Recall Accuracy By Practice Type and Cue Type')
+      ggtitle('Cued Recall Accuracy')
     
     conPlot_grouped <-  ggplot(filter(conAcc_grouped,type=='real'),
                      aes(x=other_type, y= pc,fill=prac_acc,ymax=1)) + 
@@ -202,10 +202,8 @@ plotPCL <- function(model="std") {
       ggtitle('Conditional Final Test Accuracy')
     
     m$plots[[k]] <- list(accAgg = IVplot_grouped, condAccAgg = conPlot_grouped)
-    m$results[k] <- NULL
-    glist <- data %>% group_by(subject) %>% slice(1)# summarise(group = group[1])
-    avg_res <- cbind(do.call(rbind,m$results),group=glist$group)
-    m$results[[k]] <- avg_res %>% group_by(group) %>% summarise_each(funs(mean)) #colMeans(do.call(rbind,m$results))
+    
+    save(m,file = paste(model,"results.Rdata",sep="_"))
   }  
   return(m)
 }

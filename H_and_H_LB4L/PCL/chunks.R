@@ -18,7 +18,6 @@ if(.Platform$OS.type == "unix") {
   root <- Sys.getenv("USERPROFILE")
   wd <- file.path(Sys.getenv("USERPROFILE"),"source","RPmodels","H_and_H_LB4L","PCL")
   source(file.path(Sys.getenv("USERPROFILE"),"source","RPmodels", ".Rprofile"))
-  
 }
 setwd(wd)
 source('plotPCL.R')
@@ -45,9 +44,14 @@ subjectResults <- function(m) {
 
 ## @knitr subjectAverages 
 subjectAverages <- function(m) {
+  
+  avg_res <- m$data %>% group_by(subject) %>% slice(1) %>% 
+    ungroup() %>% select(group) %>%
+    cbind(do.call(rbind,m$results)) %>%
+    group_by(group) %>% 
+    summarise_each(funs(mean))
   grid.arrange(m$plots[[length(m$plots)]]$accAgg,m$plots[[length(m$plots)]]$condAccAgg,ncol=2,nrow=1)
-  r <- m$results[[length(m$results)]]
-  print(xtable(as.matrix(r[1:which(names(r)=='value')]), digits=3,
+  print(xtable(as.matrix(avg_res[1:which(names(avg_res)=='value')]), digits=3,
                caption = paste("Average Parameters")),
         type = "html", include.rownames=FALSE, caption.placement="top")
 }
