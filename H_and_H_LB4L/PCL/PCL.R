@@ -22,7 +22,7 @@ g2 <- function(obs,pred,N) {
   return(err)
 }
 
-LL <- function(obs,pred,N) {
+binomialLL <- function(obs,pred,N) {
   obs = obs * N
 #   pred[pred==0] <- 0.001 # & !is.nan(N[pred==0])]# 1/(2*N[pred==0])
 #   pred[pred==1] <- 0.999
@@ -31,6 +31,12 @@ LL <- function(obs,pred,N) {
   return(err)
 }
 
+multinomialLL <- function(obs,pred,N){
+  obs = obs * N
+  ll <- (obs*log(pred))
+  err <- -sum(ll[!is.nan(ll)])
+  return(err)
+}
 PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),
                    data=NULL, fitting=FALSE) {
   
@@ -117,8 +123,14 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(
   }
 }
 
-PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),
-                          data=NULL, fitting=FALSE) {
+PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03), 
+                  fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),
+                  data=cbind(subset(read.csv(file.path('..','allData_by_subjects.csv')),subject==17),
+                             pred_prac_acc = NA, pred_final_acc = NA,
+                             pred_acc_plus= NA,pred_acc_neg= NA,
+                             pred_prac_and_final=NA,pred_prac_and_not_final=NA,
+                             pred_not_prac_and_final=NA,pred_not_prac_and_not_final=NA),
+                  fitting=FALSE) {
   
   p <- c(free,fixed)
 
@@ -203,7 +215,8 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03), fixed = c(Tmin
          unlist(t(data$n[!is.na(data$pred_acc_plus)]*data[!is.na(data$pred_acc_plus),
                                                           gsub("pred_","",tail(insertCols,4))]), 
                 use.names = FALSE))
-  err <- LL(obs=obs,pred=preds,N=N)
+  err <- binomialLL(obs=obs[1:4],pred=preds[1:4],N=N[1:4]) + 
+    multinomialLL(obs=obs[5:12],pred=preds[5:12],N=N[5:12])
   if (fitting) {
     return(err)
   } else {

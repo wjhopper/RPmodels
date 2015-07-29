@@ -58,7 +58,7 @@ fitPCL <- function(model=1,inpar=FALSE,...,debugLevel = 0) {
   
   if (inpar) {
     writeLines(paste('[',Sys.time(),']',"INIT parlog"), con=file.path(wd,"parlog.txt"),sep='\n')
-    clusterExport(cl,c("recallNoTime","recallTime","LL","g2"))
+    clusterExport(cl,c("recallNoTime","recallTime","binomialLL","multinomialLL","g2"))
     results <- foreach(m=models[model]) %:%
       foreach(j =unique(m$data$subject),.verbose=T,.packages=c("optimx")) %dopar% {
         sink(file.path(wd,"parlog.txt"), append=TRUE)
