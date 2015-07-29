@@ -45,7 +45,9 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   } else if (class(m$results[[1]]) =='list') {
     tmp <- lapply(m$results,`[[`,2)
   }
-  preds <- do.call(rbind,lapply(tmp,`[[`,2)) 
+  preds <- do.call(rbind,lapply(tmp,`[[`,2)) %>%
+    mutate(RT_filtered = ifelse(pred_acc==TRUE,pred_RT,NA),
+           CRT_filtered = ifelse(pred_acc==TRUE,pred_CRT,NA))
   
   # munge the data into shape
   m$data[,c("sub_num","class","order")] <- lapply(m$data[,c("sub_num","class","order")],factor)
@@ -58,8 +60,8 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
                 medianCRT = median(CRT))
     median_preds <- preds %>% group_by(sub_num,class,order) %>% 
       summarise(pred_acc = mean(pred_acc),
-                pred_medianRT = median(pred_RT),
-                pred_medianCRT = median(pred_CRT))
+                pred_medianRT = median(RT_filtered,na.rm=TRUE),
+                pred_medianCRT = median(CRT_filtered,na.rm=TRUE))
     sub_data <- left_join(median_preds,median_data)
     sub_data$acc[is.na(sub_data$acc)] <- 0 # set na's for accuracy for zeros
 
@@ -73,7 +75,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
         facet_grid(. ~ class,labeller = classLabeller) +
         scale_x_discrete("Output Item") + 
         scale_y_continuous("Median First Press RT") +
-        scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Data","PCL")) + 
+        scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Obs. Data","PCL Model")) + 
         mytheme + 
         ggtitle("Data vs. PCL: Median RT")
       
@@ -95,23 +97,26 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
     aggData <- m$data %>% group_by(class,order) %>% 
       summarise(acc = sum(score)/(length(unique(sub_num))*4),
                 medianRT = median(RT),
-                medianCRT = median(CRT))
-    aggData$acc[is.na(aggData$acc)] <- 0 
-    aggData$type <- "data"
+                medianCRT = median(CRT)) %>%
+      mutate(acc = replace(acc,is.na(acc),0),
+             type = factor("data"))
+#     aggData$acc[is.na(aggData$acc)] <- 0 
+#     aggData$type <- factor("data")
     aggPreds <- preds %>% group_by(class,order) %>% 
       summarise(acc = mean(pred_acc),
-                medianRT = median(pred_RT),
-                medianCRT = median(pred_CRT))
-    aggPreds$type <- "preds"
+                medianRT = median(RT_filtered,na.rm=TRUE),
+                medianCRT = median(CRT_filtered,na.rm=TRUE)) %>%
+      mutate(type = factor("model"))
+#     aggPreds$type <- factor("model")
     aggData <- rbind(aggData,aggPreds)
-    aggData$type <- factor(aggData$type)
+#     aggData$type <- factor(aggData$type)
     aggRTPlot <- ggplot(data =aggData,aes(x=order,y=medianRT,shape=type)) +
       geom_point() +
       geom_line(aes(group=interaction(class,type))) +
       facet_grid(. ~ class,labeller = classLabeller) +
       scale_x_discrete("Output Item") + 
       scale_y_continuous("Median First Press RT") +
-      # scale_shape_manual() + 
+      scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Obs. Data","PCL Model")) + 
       mytheme + 
       ggtitle("Data vs. PCL: Agg. Median RT")
     
@@ -121,17 +126,18 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
       facet_grid(. ~ class,labeller = classLabeller) +
       scale_x_discrete("Output Item") + 
       scale_y_continuous("Accuracy") +
-      # scale_shape_manual("",labels=c("Data","PCL")) + 
+      scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Obs. Data","PCL Model")) + 
       mytheme + 
       ggtitle("Data vs. PCL: Accuracy")
     m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot))
   }
   
-  m$results[k] <- NULL
-  m$results[[k]] <- do.call(rbind,m$results) %>% summarise_each(funs(mean))
-
+  # restore to typing when originally read in
   m$data$order <- as.numeric(levels(m$data$order))[m$data$order]
+  
+  # save the model object which has had plots added to it
   save(m,file = paste(model,"results.Rdata",sep="_"))
+  
   if (plotListOnly) {
     return(m$plots)
   } else {

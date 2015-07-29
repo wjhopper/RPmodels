@@ -3,6 +3,7 @@
 library(gridExtra)
 library(xtable)
 library(ggplot2)
+library(dplyr)
 
 opts_chunk$set(echo = FALSE,fig.width=16,fig.height=7,cache=FALSE, 
                warning=F, message=FALSE, fig.align='center')
@@ -39,8 +40,8 @@ subjectResults <- function(m) {
 ## @knitr subjectAverages 
 subjectAverages <- function(m) {
   grid.arrange(m$plots[[length(m$plots)]]$aggAcc,m$plots[[length(m$plots)]]$aggRT,ncol=1,nrow=2)
-  r <- m$results[[length(m$results)]]
-  print(xtable(as.matrix(r[1:which(names(r)=='value')]), digits=3,
+  avg_res <- do.call(rbind,m$results) %>% summarise_each(funs(mean))
+  print(xtable(as.matrix(avg_res[1:which(names(avg_res)=='value')]), digits=3,
                  caption = paste("Average Parameters")),
         type = "html", include.rownames=FALSE, caption.placement="top")
 }
