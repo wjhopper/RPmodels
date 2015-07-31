@@ -57,19 +57,8 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
                  'ss_timeFree' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05,Tmin=2,Tmax=10,lambda=.2),
                                  fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=90), 
                                  yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
-                 'ss_yoke1' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90),
-                                 yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
-                 'ss_yoke2' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90),
-                                 yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
-                 'ss_yoke3' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90),
-                                 yoke = NULL,data=SS_data,
                                  low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))))
+  
   for (i in model) {
     reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))
     reqParams <- reqParams[!reqParams %in%  c("","Tmin","Tmax","lambda")]
