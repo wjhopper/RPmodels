@@ -30,7 +30,7 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
     }
     setwd(wd)
   }
-  source('PCL.R')
+#   source('PCL.R')
   
   if (debugLevel[1]>0){
 #     trace(PCL,browser,debugLevel[2])
@@ -54,10 +54,10 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
                                  fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,lambda=.2,Tmin=2,Tmax=10,Time=90), 
                                  yoke = NULL,data=SS_data,
                                  low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))),
-                 'ss_timeFree' = list(fcn = PCL, free= c(ER=.53,LR=.1,TR =.05, FR=.05,Tmin=2,Tmax=10,lambda=.2),
-                                 fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=90), 
-                                 yoke = NULL,data=SS_data,
-                                 low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))))
+                 'ss_timeFree' = list(fcn = PCL,free= c(ER=.53,LR=.1,TR =.05, FR=.05,Tmin=2, Tmax=10, lambda=.25), 
+                                      fixed = c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=90),
+                                      yoke = NULL, data=SS_data,
+                                      low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$sub_num)))))
   
   for (i in model) {
     reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))
@@ -87,7 +87,7 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
   } else {
     k=1
     for (i in model) {
-      for (j in unique(models[[i]]$data$sub_num)) {
+      for (j in 1) {#unique(models[[i]]$data$sub_num)) {
         message(paste("Fitting subject", j))
         a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
                     fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$sub_num ==j,], fitting=TRUE)

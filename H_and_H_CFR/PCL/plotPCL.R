@@ -100,16 +100,13 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
                 medianCRT = median(CRT)) %>%
       mutate(acc = replace(acc,is.na(acc),0),
              type = factor("data"))
-#     aggData$acc[is.na(aggData$acc)] <- 0 
-#     aggData$type <- factor("data")
     aggPreds <- preds %>% group_by(class,order) %>% 
       summarise(acc = mean(pred_acc),
                 medianRT = median(RT_filtered,na.rm=TRUE),
                 medianCRT = median(CRT_filtered,na.rm=TRUE)) %>%
       mutate(type = factor("model"))
-#     aggPreds$type <- factor("model")
     aggData <- rbind(aggData,aggPreds)
-#     aggData$type <- factor(aggData$type)
+
     aggRTPlot <- ggplot(data =aggData,aes(x=order,y=medianRT,shape=type)) +
       geom_point() +
       geom_line(aes(group=interaction(class,type))) +
