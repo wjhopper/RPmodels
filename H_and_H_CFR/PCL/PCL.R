@@ -111,13 +111,15 @@ PCL <- function(free= c(ER=.53,LR=.3,TR =.3, FR=.1,Tmin=2, Tmax=10, lambda=.8),
   if (fitting) {
     return(err)
   } else {
-    acc <- melt(rbind(prac$Acc,restudy$Acc,test$Acc),
-                varnames=c("class","order"),value.name = "pred_acc")
-    RT <- melt(do.call(rbind,list(np=prac$RT, sp = restudy$RT, tp = test$RT)),
-               varnames=c("class","order"),value.name = "pred_RT")
-    CRT <- melt(do.call(rbind,list(np=prac$CRT, sp = restudy$CRT, tp = test$CRT)),
-                varnames=c("class","order"),value.name = "pred_CRT")
-    preds <- data.frame(sub_num = data$sub_num[1],Reduce(inner_join,list(acc,RT,CRT)))
+    RT <-rbind(prac$RT,restudy$RT,test$RT)#,
+    order <- rbind(prac$order,restudy$order,test$order)
+    RT <-t(sapply(seq(nrow(RT)),
+                  function(x) c(RT[x, order[x,][!is.na(RT[x,order[x,]])]], 
+                                RT[x, order[x,][is.na(RT[x,order[x,]])]])
+    ))
+    acc <-melt(!is.na(RT), varnames=c("class","order"),value.name = "pred_acc")
+    RT <- melt(RT, varnames=c("class","order"),value.name = "pred_RT")
+    preds <- data.frame(sub_num = data$sub_num[1],left_join(acc,RT))
     preds$class <- rep(rep(c("np","sp","tp"),each = nrow(prac$Acc)),ncol(prac$Acc))
     return(list(err=err,preds=preds,dist = dist))
   }
