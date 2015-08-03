@@ -30,7 +30,7 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
     }
     setwd(wd)
   }
-#   source('PCL.R')
+  source('PCL.R')
   
   if (debugLevel[1]>0){
 #     trace(PCL,browser,debugLevel[2])
@@ -75,7 +75,7 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
       foreach(j =unique(m$data$sub_num),.verbose=T,.packages=c("dplyr","optimx","reshape2")) %dopar% {
         sink(file.path(wd,"parlog.txt"), append=TRUE)
         cat(paste("Fitting subject", j,"\n"))
-        optimx(par=m$free, fn = m$fcn, method = "Nelder-Mead",lower=m$low, upper=m$up,
+        optimx(par=m$free, fn = m$fcn, method = "Nelder-Mead", control = list(maxit = 1000), lower=m$low, upper=m$up,
                fixed=m$fix, data=m$data[m$data$sub_num ==j,], fitting=TRUE)
       }
     for (i in 1:length(results)){
@@ -87,9 +87,10 @@ fitPCL <- function(model=1,inpar = FALSE,...,debugLevel = 0) {
   } else {
     k=1
     for (i in model) {
-      for (j in 1) {#unique(models[[i]]$data$sub_num)) {
+      for (j in unique(models[[i]]$data$sub_num)) {
         message(paste("Fitting subject", j))
-        a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead",lower=models[[i]]$low, upper=models[[i]]$up,
+        a <- optimx(par=models[[i]]$free, fn = models[[i]]$fcn, method = "Nelder-Mead", control = list(maxit = 1000),
+                    lower=models[[i]]$low, upper=models[[i]]$up,
                     fixed=models[[i]]$fix, data=models[[i]]$data[models[[i]]$data$sub_num ==j,], fitting=TRUE)
         models[[i]]$results[[k]] <- a
         k=k+1
