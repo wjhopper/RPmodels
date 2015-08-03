@@ -45,9 +45,7 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   } else if (class(m$results[[1]]) =='list') {
     tmp <- lapply(m$results,`[[`,2)
   }
-  preds <- do.call(rbind,lapply(tmp,`[[`,2)) %>%
-    mutate(RT_filtered = ifelse(pred_acc==TRUE,pred_RT,NA),
-           CRT_filtered = ifelse(pred_acc==TRUE,pred_CRT,NA))
+  preds <- do.call(rbind,lapply(tmp,`[[`,2))
   
   # munge the data into shape
   m$data[,c("sub_num","class","order")] <- lapply(m$data[,c("sub_num","class","order")],factor)
@@ -56,12 +54,10 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
   if (length(unique(preds$sub_num))>1) {
     median_data <- m$data %>% group_by(sub_num,class,order) %>% 
       summarise(acc = sum(score)/4,
-                medianRT = median(RT),
-                medianCRT = median(CRT))
+                medianRT = median(RT))
     median_preds <- preds %>% group_by(sub_num,class,order) %>% 
       summarise(pred_acc = mean(pred_acc),
-                pred_medianRT = median(RT_filtered,na.rm=TRUE),
-                pred_medianCRT = median(CRT_filtered,na.rm=TRUE))
+                pred_medianRT = median(pred_RT,na.rm=TRUE))
     sub_data <- left_join(median_preds,median_data)
     sub_data$acc[is.na(sub_data$acc)] <- 0 # set na's for accuracy for zeros
 
@@ -96,34 +92,39 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
     }
     aggData <- m$data %>% group_by(class,order) %>% 
       summarise(acc = sum(score)/(length(unique(sub_num))*4),
+                err = sqrt(sum((score-acc)^2)/length(unique(sub_num))*4)/sqrt(length(unique(sub_num))*4),
                 medianRT = median(RT),
-                medianCRT = median(CRT)) %>%
+                mad = median(abs(RT-medianRT),na.rm=TRUE)) %>%
       mutate(acc = replace(acc,is.na(acc),0),
              type = factor("data"))
     aggPreds <- preds %>% group_by(class,order) %>% 
       summarise(acc = mean(pred_acc),
-                medianRT = median(RT_filtered,na.rm=TRUE),
-                medianCRT = median(CRT_filtered,na.rm=TRUE)) %>%
+                err = sd(pred_acc)/sqrt(n()),
+                medianRT = median(pred_RT,na.rm=TRUE),
+                mad = median(abs(pred_RT-medianRT),na.rm=TRUE)) %>%
       mutate(type = factor("model"))
     aggData <- rbind(aggData,aggPreds)
 
     aggRTPlot <- ggplot(data =aggData,aes(x=order,y=medianRT,shape=type)) +
       geom_point() +
-      geom_line(aes(group=interaction(class,type))) +
+      geom_line(aes(group=interaction(class,type), linetype=type)) +
+      geom_errorbar(aes(ymax=medianRT+mad, ymin=medianRT-mad),width=.15) +
       facet_grid(. ~ class,labeller = classLabeller) +
       scale_x_discrete("Output Item") + 
       scale_y_continuous("Median First Press RT") +
       scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Obs. Data","PCL Model")) + 
+      scale_linetype_discrete(guide=FALSE) + 
       mytheme + 
       ggtitle("Data vs. PCL: Agg. Median RT")
     
     aggAccPlot <- ggplot(data =aggData,aes(x=order,y=acc,shape=type)) +
       geom_point() +
-      geom_line(aes(group=interaction(class,type))) +
+      geom_line(aes(group=interaction(class,type), linetype=type)) +
       facet_grid(. ~ class,labeller = classLabeller) +
       scale_x_discrete("Output Item") + 
       scale_y_continuous("Accuracy") +
       scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Obs. Data","PCL Model")) + 
+      scale_linetype_discrete(guide=FALSE) + 
       mytheme + 
       ggtitle("Data vs. PCL: Accuracy")
     m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot))
