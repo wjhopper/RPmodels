@@ -14,8 +14,6 @@ recallNoTime <- function(mem=NULL,thresh=NULL,space=NULL,...) {
 } 
 
 g2 <- function(obs,pred,N) {
-#   pred[pred==0] <- 0.001 # & !is.nan(N[pred==0])]# 1/(2*N[pred==0])
-#   pred[pred==1] <- 0.999
   Lc <- obs*(log(pred)) + ((1-obs)*log(1-pred))
   Lu <- obs*(log(obs)) + ((1-obs)*log(1-obs))
   err <- -sum(2*N*(Lc-Lu))
@@ -24,8 +22,6 @@ g2 <- function(obs,pred,N) {
 
 binomialLL <- function(obs,pred,N) {
   obs = obs * N
-#   pred[pred==0] <- 0.001 # & !is.nan(N[pred==0])]# 1/(2*N[pred==0])
-#   pred[pred==1] <- 0.999
   ll = (obs*log(pred))+((N-obs)*log(1-pred))
   err=-sum(ll[!is.nan(ll)])        
   return(err)
@@ -210,13 +206,12 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03),
   obs <- c(data$prac_acc[!is.na(data$pred_prac_acc)], # practice accuracy
            data$final_acc[data$practice %in% c('C','S') & is.na(data$other_type)], # control and study practice
            unlist(t(data[!is.na(data$pred_acc_plus),gsub("pred_","",tail(insertCols,4))]), use.names = FALSE))# items with test practice 
-  N <- c(data$n[!is.na(data$pred_prac_acc)], # control and study practice
-         data$n[data$practice %in% c('C','S') & is.na(data$other_type)], # items with test practice 
-         unlist(t(data$n[!is.na(data$pred_acc_plus)]*data[!is.na(data$pred_acc_plus),
-                                                          gsub("pred_","",tail(insertCols,4))]), 
+  N <- c(data$n[!is.na(data$pred_prac_acc)], 
+         data$n[data$practice %in% c('C','S') & is.na(data$other_type)], 
+         unlist(data$n[!is.na(data$pred_acc_plus)], 
                 use.names = FALSE))
   err <- binomialLL(obs=obs[1:4],pred=preds[1:4],N=N[1:4]) + 
-    multinomialLL(obs=obs[5:12],pred=preds[5:12],N=N[5:12])
+    multinomialLL(obs=obs[5:12],pred=preds[5:12],N=rep(N[5:6],each=4))
   if (fitting) {
     return(err)
   } else {
