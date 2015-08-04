@@ -39,6 +39,7 @@ subjectResults <- function(m) {
     print(xtable(data.frame(Subject = sList[i],Group = m$data$group[m$data$subject==sList[i]][1],m$results[[i]]),
                  digits=3, caption = paste("Best Parameters")),
           type = "html", include.rownames=FALSE, caption.placement="top")
+    print(m$plots[[i]]$joint_acc)
   }
 }
 
@@ -53,5 +54,7 @@ subjectAverages <- function(m) {
   grid.arrange(m$plots[[length(m$plots)]]$accAgg,m$plots[[length(m$plots)]]$condAccAgg,ncol=2,nrow=1)
   print(xtable(as.matrix(avg_res[1:which(names(avg_res)=='value')]), digits=3,
                caption = paste("Average Parameters")),
-        type = "html", include.rownames=FALSE, caption.placement="top")
+        type = "html", include.rownames=FALSE, caption.placement="top")  
+  print(m$plots[[length(m$plots)]]$jointAccAgg)
+
 }
