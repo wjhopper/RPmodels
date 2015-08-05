@@ -25,7 +25,7 @@ recall <- function(mem,thresh,Tmin=NULL,Tmax=NULL,Time=NULL,lambda=NULL) {
   
 }
 
-RTdis <- function(RT = NULL, order = NULL, recalled = NULL, Time= NULL) {
+RTdis <- function(RT = NULL, order = NULL, Time= NULL) {
   
   # for each rank ordering recall position (Nlist), 
   # the KS density at each 1/10 second of recall test period (TestTime)
@@ -77,13 +77,13 @@ PCL <- function(free= c(ER=.53,LR=.3,TR =.3, FR=.1,Tmin=2, Tmax=10, lambda=.8),
 #   init_mem <- as.matrix(read.csv('mem.csv'))
 #   init_thresh <- as.matrix(read.csv('theta.csv'))
   prac <- recall(init_mem,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
-  prac$dist <- RTdis(prac$RT, prac$order, prac$Acc, p['Time']) 
+  prac$dist <- RTdis(prac$RT, prac$order, p['Time']) 
   
   # study practice
   restudyStrengths <- init_mem + rbinom(mxn,p['nFeat']-init_mem, p['LR'])
   restudyStrengths  <- restudyStrengths - rbinom(mxn,restudyStrengths, p['FR'])
   restudy<-recall(restudyStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
-  restudy$dist <- RTdis(restudy$RT, restudy$order, restudy$Acc,p['Time']) 
+  restudy$dist <- RTdis(restudy$RT, restudy$order, p['Time']) 
   
   # test practice
   testStrengths <- init_mem #copy strengths and thresholds from practice test 
@@ -92,7 +92,7 @@ PCL <- function(free= c(ER=.53,LR=.3,TR =.3, FR=.1,Tmin=2, Tmax=10, lambda=.8),
   testThresh[prac$Acc] <- init_thresh[prac$Acc] - rbinom(sum(prac$Acc),init_thresh[prac$Acc], p['TR'])
   testStrengths <- testStrengths -rbinom(mxn,testStrengths, p['FR'])
   test <- recall(testStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
-  test$dist <- RTdis(test$RT, test$order, test$Acc,p['Time']) 
+  test$dist <- RTdis(test$RT, test$order, p['Time']) 
   
   dist <- data.frame(class = rep(c('np','sp','tp'),each=nrow(prac$dist)),
                       rbind(prac$dist, restudy$dist, test$dist))
@@ -100,7 +100,7 @@ PCL <- function(free= c(ER=.53,LR=.3,TR =.3, FR=.1,Tmin=2, Tmax=10, lambda=.8),
   if (fitting) {
     return(err)
   } else {
-    RT <-rbind(prac$RT,restudy$RT,test$RT)#,
+    RT <-rbind(prac$RT,restudy$RT,test$RT)
     order <- rbind(prac$order,restudy$order,test$order)
     RT <-t(sapply(seq(nrow(RT)),
                   function(x) c(RT[x, order[x,][!is.na(RT[x,order[x,]])]], 
