@@ -131,7 +131,7 @@ plotPCL <- function(model="std") {
                                                     "1 Cue, No Practice",
                                                     "1 Cue, Restudied",
                                                     "1 Cue, Tested")) + 
-        scale_shape_discrete("Type", labels=c("Obs. Data","PCL Model")) +
+        scale_shape_discrete("Type", labels=c("real" = "Obs. Data","model" = "PCL Model")) +
         scale_y_continuous("Final Test Accuracy",limit=0:1) + 
         mytheme + 
         theme(legend.key.height=unit(2,"line")) + 
@@ -161,7 +161,9 @@ plotPCL <- function(model="std") {
                             mutate(cues = factor(ifelse(grepl("1.",xaxis),2,1))),
                           aes(x=xaxis, y= pc, color = type)) + 
         geom_point(size= 3) +
-        scale_x_discrete(labels = c("2.2" = "Control","3.2" = "Restudy","1.cor.cor" ="2 Cue: Cor. & Cor.",
+        scale_x_discrete(labels = c("2.2" = "Control","3.2" = "Restudy",
+                                    "2.3" = "Control","3.3" = "Restudy",
+                                    "1.cor.cor" ="2 Cue: Cor. & Cor.",
                                     "5.cor.cor"  = "1 Cue: Cor & Cor", "1.cor.inc"  = "2 Cues: Cor. & Inc.",
                                     "5.cor.inc" = "1 Cue: Cor. & Inc.", "1.inc.cor"  = "2 Cue: Inc. & Cor.",
                                     "5.inc.cor"  = "1 Cue: Inc. & Cor.", "1.inc.inc" = "2 Cue: Inc. & Inc." ,
