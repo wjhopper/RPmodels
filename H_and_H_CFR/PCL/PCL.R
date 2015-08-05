@@ -8,7 +8,7 @@ recall <- function(mem,thresh,Tmin=NULL,Tmax=NULL,Time=NULL,lambda=NULL) {
     CRT <- cumsum(Tmin + (Tmax-Tmin)*exp(-lambda*abs(mem[i,]-thresh[i,]))[ord])
     acc <- CRT < Time & (mem[i,ord]  >= thresh[i,ord])
     if (any(acc)) {
-      RT[i,ord[acc]] <- c(CRT[1],diff(CRT[acc]))
+      RT[i,ord[acc]] <- c(CRT[acc][1],diff(CRT[acc]))
     } 
     recalled[i,] <- acc[reverseOrd]
     serialOrder[i,] <- ord
@@ -17,22 +17,11 @@ recall <- function(mem,thresh,Tmin=NULL,Tmax=NULL,Time=NULL,lambda=NULL) {
   return(list(Acc=recalled,RTrounded=RT,order=serialOrder))
   
 # tests
+# max(mem[i,])==mem[i,ord[1]] & min(mem[i,])==mem[i,ord[15]]
+# mem[i,ord][reverseOrd] == mem[i,]
 # all((mem[i,] >= thresh[i,])==recalled[i,])
 # all(!is.na(RT[i,]) ==recalled[i,] & is.na(RT[i,]) == !recalled[i,])
-  
-#   RT <- Tmin + (Tmax-Tmin)*exp(-lambda*abs(mem-thresh))
-#   serialOrder <- t(apply(mem, 1, order,decreasing=TRUE))
-#   CRT <- t(apply(t(sapply(seq(nrow(RT)),
-#                           function(x) RT[x, serialOrder[x,]] )),
-#                  1, cumsum))
-#   revMat <- t(apply(serialOrder, 1, order))
-#   CRT <- t(sapply(seq(nrow(CRT)), function(x) CRT[x, revMat[x,]] ))
-  
-#   recalled <- (CRT < Time) & (mem >= thresh) # only above threshold and shorter than alloted time are recoverable
-#   for (i in 1:nrow(RT)) {
-#     RT[i,which(recalled[i,][serialOrder[i,]])[-1]] <- diff(sort(CRT[recalled[i,]]))
-#   }
-#   return(list(Acc=recalled,RTrounded=RT,order=serialOrder))
+
   
 }
 
