@@ -29,15 +29,15 @@ multinomialg2 <- function(obs,pred,N) {
 
 binomialLL <- function(obs,pred,N) {
   obs <- obs * N
-  ll <-  (obs*log(pred))+((N-obs)*log(1-pred))
-  err <- -sum(ll[!is.nan(ll)])
+  ll <-  obs[obs!=0]*log(pred[obs!=0]) + ((N-obs)[obs!=0])*log(1-pred[obs!=0])
+  err <- -sum(ll)
   return(err)
 }
 
 multinomialLL <- function(obs,pred,N){
   obs = obs * N
-  ll <- (obs*log(pred))
-  err <- -sum(ll[!is.nan(ll)])
+  ll <- obs[obs!=0]*log(pred[obs!=0])
+  err <- -sum(ll)
   return(err)
 }
 PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),
@@ -215,8 +215,7 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03),
            unlist(t(data[!is.na(data$pred_acc_plus),gsub("pred_","",tail(insertCols,4))]), use.names = FALSE))# items with test practice 
   N <- c(data$n[!is.na(data$pred_prac_acc)], 
          data$n[data$practice %in% c('C','S') & is.na(data$other_type)], 
-         unlist(data$n[!is.na(data$pred_acc_plus)], 
-                use.names = FALSE))
+         unlist(data$n[!is.na(data$pred_acc_plus)], use.names = FALSE))
   err <- binomialLL(obs=obs[1:4],pred=preds[1:4],N=N[1:4]) + 
     multinomialLL(obs=obs[5:12],pred=preds[5:12],N=rep(N[5:6],each=4))
   if (fitting) {
