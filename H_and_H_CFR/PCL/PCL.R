@@ -38,9 +38,9 @@ RTdis <- function(RT = NULL, order = NULL, recalled = NULL, Time= NULL) {
   for (n in 1:ncol(RT)) {
     RTs<- RT[!is.na(RT[,n]),n]
     if (length(RTs)>2) {
+#       D <- bkde(RTs,bandwidth=1,gridsize=900,range.x=c(.1,90))
       D <- density(RTs,bw=1,n=900,from=.1,to=90)
-      height <- D$y
-      height <- height/sum(height)
+      height <- D$y/sum(D$y)
       RTdis[,n] <- (length(RTs)/nrow(RT))*height
     }
   }
