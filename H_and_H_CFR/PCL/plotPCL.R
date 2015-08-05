@@ -46,7 +46,8 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
     tmp <- lapply(m$results,`[[`,2)
   }
   preds <- do.call(rbind,lapply(tmp,`[[`,2))
-  
+  dist <- do.call(rbind,lapply(tmp,`[[`,3))
+  dist$sub_num <- rep(unique(m$data$sub_num),each= nrow(dist)/length(unique(m$data$sub_num)))
   # munge the data into shape
   m$data[,c("sub_num","class","order")] <- lapply(m$data[,c("sub_num","class","order")],factor)
   preds[,c("sub_num","class","order")] <- lapply(preds[,c("sub_num","class","order")],factor)
@@ -86,8 +87,17 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
         scale_shape_manual("",values=c("data"=1,"model"=2),labels=c("Data","PCL")) + 
         mytheme + 
         ggtitle("Data vs. PCL: Accuracy")
+      
+      densityPlot <- ggplot(data =dist[dist$sub_num==i,],aes(x=RTrounded,y=RTdist)) + 
+        geom_line(size=.75) +
+        facet_grid(class~order) +
+        geom_point(data = m$data[m$data$sub_num==i,],
+                   mapping=aes(x=RTrounded),y=0,color="blue") + 
+        scale_x_continuous(limits=c(0,max(m$data$RTrounded[m$data$sub_num==i]+5))) + 
+        mytheme + theme(axis.text.x = element_text(size=rel(1))) + 
+        ggtitle("Model Density")
     
-      m$plots[[k]] <- list(RT=rtPlot,Acc = accPlot)
+      m$plots[[k]] <- list(RT=rtPlot,Acc = accPlot, density = densityPlot)
       k=k+1
     }
     aggData <- m$data %>% group_by(class,order) %>% 
@@ -104,6 +114,9 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
                 mad = median(abs(pred_RT-medianRT),na.rm=TRUE)) %>%
       mutate(type = factor("model"))
     aggData <- rbind(aggData,aggPreds)
+    
+    aggDist <- dist %>% group_by(class,order,RTrounded) %>%
+      summarise(RTdist = mean(RTdist))
 
     aggRTPlot <- ggplot(data =aggData,aes(x=order,y=medianRT,shape=type)) +
       geom_point() +
@@ -127,7 +140,16 @@ plotPCL <- function(model="ss_std",plotListOnly = TRUE) {
       scale_linetype_discrete(guide=FALSE) + 
       mytheme + 
       ggtitle("Data vs. PCL: Accuracy")
-    m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot))
+    
+    aggDensityPlot <- ggplot(data =aggDist,aes(x=RTrounded,y=RTdist)) + 
+      geom_line(size=.75) +
+      facet_grid(class~order) +
+      geom_point(data = m$data,
+                 mapping=aes(x=RTrounded),y=0,color="blue") + 
+      scale_x_continuous(limits=c(0,max(m$data$RTrounded+2.5))) +
+      mytheme + theme(axis.text.x = element_text(size=rel(1))) + 
+      ggtitle("Average Model Density")
+    m$plots[k] <- list(list(aggRT=aggRTPlot,aggAcc = aggAccPlot, aggDensity = aggDensityPlot))
   }
   
   # restore to typing when originally read in

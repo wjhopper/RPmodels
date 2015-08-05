@@ -34,6 +34,7 @@ subjectResults <- function(m) {
     print(xtable(data.frame(Subject = sList[i],m$results[[i]]),
                  digits=3, caption = paste("Best Parameters")),
         type = "html", include.rownames=FALSE, caption.placement="top")
+    print(m$plots[[i]]$density)
   }	       
 }
 
@@ -44,4 +45,6 @@ subjectAverages <- function(m) {
   print(xtable(as.matrix(avg_res[1:which(names(avg_res)=='value')]), digits=3,
                  caption = paste("Average Parameters")),
         type = "html", include.rownames=FALSE, caption.placement="top")
+  print(m$plots[[length(m$plots)]]$aggDensity)
+  
 }
