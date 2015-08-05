@@ -204,14 +204,14 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03),
   
   
   #control no practice
-  controlImmStrengths <- init_mem_C1 - rbinom(mxn, init_mem_C1, p['F1'])
-  controlImmAcc <- recall(controlImmStrengths, init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
+  controlStrengths <- init_mem_C1 - rbinom(mxn, init_mem_C1, p['F1'])
+  controlAcc <- recall(controlStrengths, init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
 
   # study practice
   #imm
   restudyStrengths <- init_mem_C1 + rbinom(mxn,p['nFeat']-init_mem_C1, p['LR'])
-  restudyImmStrengths  <- restudyStrengths - rbinom(mxn,restudyStrengths, p['F1'])
-  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
+  restudyStrengths  <- restudyStrengths - rbinom(mxn,restudyStrengths, p['F1'])
+  restudyAcc<-recall(restudyStrengths, init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   
   # test practice
   testStrengths <- init_mem_C1 #copy strengths and thresholds from practice test 
@@ -219,27 +219,27 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03),
   #imm
   testStrengths[prac] <- init_mem_C1[prac] + rbinom(sum(prac),p['nFeat']-init_mem_C1[prac], p['LR'])
   testThresh[prac] <- init_thresh[prac] - rbinom(sum(prac),init_thresh[prac], p['TR'])
-  testImmStrengths <- testStrengths -rbinom(mxn,testStrengths, p['F1'])
-  testImmAcc <- recall(testImmStrengths, testThresh,p['space'],p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
+  testStrengths <- testStrengths -rbinom(mxn,testStrengths, p['F1'])
+  testAcc <- recall(testStrengths, testThresh,p['space'],p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   
   #no practice, other cue test practice
   #imm
-  testOCImmStrengths <- init_mem_C2 - rbinom(mxn, init_mem_C2, p['F1'])
-  testOCImmAcc<- recall(testOCImmStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
+  testOCStrengths <- init_mem_C2 - rbinom(mxn, init_mem_C2, p['F1'])
+  testOCAcc<- recall(testOCStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   
   #compute predictions
   avgs <- lapply(list(prac=prac,
-                      chain1 = testOCImmAcc, chain1plus = testOCImmAcc[prac],chain1neg = testOCImmAcc[!prac], 
-                      chain1_prac_final = (prac & testOCImmAcc),
-                      chain1_prac_not_final = (prac & !testOCImmAcc),
-                      chain1_not_prac_final = (!prac & testOCImmAcc),
-                      chain1_not_prac_not_final = (!prac & !testOCImmAcc),
-                      chain2 = controlImmAcc, chain3= restudyImmAcc,
-                      chain5 = testImmAcc, chain5plus = testImmAcc[prac],chain5neg = testImmAcc[!prac],
-                      chain5_prac_final = (prac & testImmAcc),
-                      chain5_prac_not_final = (prac & !testImmAcc),
-                      chain5_not_prac_final = (!prac & testImmAcc),
-                      chain5_not_prac_not_final = (!prac & !testImmAcc)),
+                      chain1 = testOCAcc, chain1plus = testOCAcc[prac],chain1neg = testOCAcc[!prac], 
+                      chain1_prac_final = (prac & testOCAcc),
+                      chain1_prac_not_final = (prac & !testOCAcc),
+                      chain1_not_prac_final = (!prac & testOCAcc),
+                      chain1_not_prac_not_final = (!prac & !testOCAcc),
+                      chain2 = controlAcc, chain3= restudyAcc,
+                      chain5 = testAcc, chain5plus = testAcc[prac],chain5neg = testAcc[!prac],
+                      chain5_prac_final = (prac & testAcc),
+                      chain5_prac_not_final = (prac & !testAcc),
+                      chain5_not_prac_final = (!prac & testAcc),
+                      chain5_not_prac_not_final = (!prac & !testAcc)),
                  mean)
   
   # Fill in data frame with preds
