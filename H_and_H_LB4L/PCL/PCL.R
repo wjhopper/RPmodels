@@ -13,17 +13,24 @@ recallNoTime <- function(mem=NULL,thresh=NULL,space=NULL,...) {
   return(recalled)
 } 
 
-g2 <- function(obs,pred,N) {
+binomialg2 <- function(obs,pred,N) {
   Lc <- obs*(log(pred)) + ((1-obs)*log(1-pred))
   Lu <- obs*(log(obs)) + ((1-obs)*log(1-obs))
   err <- -sum(2*N*(Lc-Lu))
   return(err)
 }
 
+multinomialg2 <- function(obs,pred,N) {
+  Lc <- obs*(log(pred)) 
+  Lu <- obs*(log(obs)) 
+  err <- -sum(2*N*(Lc-Lu))
+  return(err)
+}
+
 binomialLL <- function(obs,pred,N) {
-  obs = obs * N
-  ll = (obs*log(pred))+((N-obs)*log(1-pred))
-  err=-sum(ll[!is.nan(ll)])        
+  obs <- obs * N
+  ll <-  (obs*log(pred))+((N-obs)*log(1-pred))
+  err <- -sum(ll[!is.nan(ll)])
   return(err)
 }
 
@@ -164,8 +171,8 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03),
   testStrengths <- init_mem_C1 #copy strengths and thresholds from practice test 
   testThresh <- init_thresh 
   #imm
-  testStrengths[prac==TRUE] <- init_mem_C1[prac==TRUE] + rbinom(sum(prac==TRUE),p['nFeat']-init_mem_C1[prac==TRUE], p['LR'])
-  testThresh[prac==TRUE] <- init_thresh[prac==TRUE] - rbinom(sum(prac==TRUE),init_thresh[prac==TRUE], p['TR'])
+  testStrengths[prac] <- init_mem_C1[prac] + rbinom(sum(prac),p['nFeat']-init_mem_C1[prac], p['LR'])
+  testThresh[prac] <- init_thresh[prac] - rbinom(sum(prac),init_thresh[prac], p['TR'])
   testImmStrengths <- testStrengths -rbinom(mxn,testStrengths, p['F1'])
   testImmAcc <- recall(testImmStrengths, testThresh,p['space'],p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   
