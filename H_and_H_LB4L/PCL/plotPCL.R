@@ -147,7 +147,7 @@ plotPCL <- function(model="std") {
     k=1
     IVdata_grouped <- IVdata 
     conAcc_grouped <- conAcc
-#     conAcc_grouped$group <- factor(conAcc_grouped$group, levels = c("immediate","delay"))
+    conAcc_grouped$group <- factor(conAcc_grouped$group, levels = c("immediate","delay"))
     jointAcc_grouped <- jointAcc 
   }
  
@@ -170,7 +170,7 @@ plotPCL <- function(model="std") {
     mytheme +  theme(legend.key.height=unit(2,"line")) + 
     ggtitle('Cued Recall Accuracy')
   
-  conPlot_grouped <-  ggplot(filter(conAcc_grouped,type=='real'),
+  conPlot_grouped <-  ggplot(filter(conAcc_grouped, is.finite(pc), type=='real'),
                              aes(x=other_type, y= pc,fill=prac_acc,ymax=1)) + 
     geom_bar(position='dodge',stat="identity") +
     geom_point(shape= 19, size = 3, position = position_dodge(width=0.9),
@@ -178,7 +178,7 @@ plotPCL <- function(model="std") {
     # label n observations in each cell
     geom_text(aes(y=-.025,label =n, group=prac_acc),
               position = position_dodge(width=0.9)) +
-    facet_grid(. ~ group, labeller=function(...) { return(c("Immediate","Delayed"))}) +
+    facet_grid(. ~ group,labeller=function(...) { return(c("Immediate","Delayed"))}) +
     scale_fill_brewer("Practice\nAccuracy", 
                       breaks=c(0,1), 
                       labels=c("Incorrect", "Correct"),
