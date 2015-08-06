@@ -29,7 +29,6 @@ fitPCL <- function(model=1,inpar=FALSE,...,debugLevel = 0) {
   }
   source('PCL.R')
   if (debugLevel[1]>0){
-    #     trace(PCL,browser,debugLevel[2])
     setBreakpoint('PCL.R', debugLevel[2], envir = fitPCL)
   }
 
@@ -40,10 +39,10 @@ fitPCL <- function(model=1,inpar=FALSE,...,debugLevel = 0) {
                    pred_acc_plus= NA,pred_acc_neg= NA,
                    pred_prac_and_final=NA,pred_prac_and_not_final=NA,pred_not_prac_and_final=NA,pred_not_prac_and_not_final=NA)
   
-  models <- list('std' = list(fcn = PCL, free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03),
+  models <- list('std' = list(fcn = PCL, free= c(ER=.58,LR=.1,TR =.1, F1=.05,F2=.1,space=.03),
                                    fix= c(theta=.5,nFeat=100,nSim=1000,nList=15),data=data,
                                    low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(data$subject)))), 
-                 'std_ss' = list(fcn = PCLss, free= c(ER=.53,LR=.07,TR =.4, F1=.1,space=.03),
+                 'std_ss' = list(fcn = PCLss, free= c(ER=.52,LR=.2,TR =.03, F1=.05,space=.03),
                                    fix= c(theta=.5,nFeat=100,nSim=1000,nList=15),data=SS_data,
                                    low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))))
   for (i in model) {
