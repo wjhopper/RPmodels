@@ -41,14 +41,14 @@ fitPCL <- function(model=1,inpar=FALSE,...,debugLevel = 0) {
                    pred_prac_and_final=NA,pred_prac_and_not_final=NA,pred_not_prac_and_final=NA,pred_not_prac_and_not_final=NA)
   
   models <- list('std' = list(fcn = PCL, free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03),
-                                   fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=data,
+                                   fix= c(theta=.5,nFeat=100,nSim=1000,nList=15),data=data,
                                    low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(data$subject)))), 
                  'std_ss' = list(fcn = PCLss, free= c(ER=.53,LR=.07,TR =.4, F1=.1,space=.03),
-                                   fix= c(theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),data=SS_data,
+                                   fix= c(theta=.5,nFeat=100,nSim=1000,nList=15),data=SS_data,
                                    low = -Inf, up = Inf, results = vector(mode="list",length=length(unique(SS_data$subject)))))
   for (i in model) {
     reqParams <- c(names(formals(models[[i]]$fcn)$free), names(formals(models[[i]]$fcn)$fix))
-    reqParams <- reqParams[!reqParams %in%  c("","Tmin","Tmax","lambda")]
+    reqParams <- reqParams[!reqParams %in%  c("","Time","Tmin","Tmax","lambda")]
     givenParams <- names(c(models[[i]]$free,models[[i]]$fix))
     if (!all( reqParams[reqParams != ""]  %in% givenParams)) {
       stop(paste(reqParams[!reqParams %in% givenParams], " not specified in model,check model input list"))
