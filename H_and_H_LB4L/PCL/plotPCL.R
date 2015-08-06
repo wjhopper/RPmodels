@@ -68,42 +68,30 @@ plotPCL <- function(model="std") {
            final_acc = factor(ifelse(grepl("not_final",variable,fixed=TRUE),0,1),labels = c("inc","cor")),
            xaxis = interaction(chain,prac_acc,final_acc))
   
-  if (length(unique(data$timepoint[data$subject == unique(data$subject)[1]]))>2) {
-    IVplot_grouped <- ggplot(filter(IVdata_grouped,is.finite(pc)) %>% 
-                               mutate(group_imm_to_del = replace(group,which(group=='delay' & timepoint ==3),'immediate'),
-                                      group_del_to_imm = replace(group,which(group=='immediate' & timepoint ==2),'delay'),
-                                      grouping1 =  factor(paste(type,group_imm_to_del,
-                                                                strSort(as.character(interaction(practice,other_type)),'.'), 
-                                                                sep='.')),
-                                      grouping2 =  factor(paste(type,group_del_to_imm,
-                                                                strSort(as.character(interaction(practice,other_type)),'.'),
-                                                                sep='.'))),
-                             aes(x=timepoint, shape = type, y=pc,ymax=.85,ymin=.15)) +
-      geom_line(aes(group = grouping1,linetype=grouping1),size=.75) +
-      geom_line(aes(group = grouping2,linetype=grouping2),size=.75) +
-      geom_point(aes(color=practice),size=3) +
-      scale_linetype_manual("Final Test Cue",
-                            values=c("model.delay.C.NA" =1 ,"model.delay.C.T"=2, 
-                                     "model.delay.NA.S"=1, "model.delay.NA.T"=1,
-                                     "model.immediate.C.NA"=1,"model.immediate.C.T"=2,
-                                     "model.immediate.NA.S"=1, "model.immediate.NA.T"=1,
-                                     "real.delay.C.NA"=1,"real.delay.C.T"=2,
-                                     "real.delay.NA.S"=1, "real.delay.NA.T"=1,
-                                     "real.immediate.C.NA"=1,"real.immediate.C.T"=2,
-                                     "real.immediate.NA.S"=1, "real.immediate.NA.T"=1),
-                            limits=c("model.delay.NA.T","model.delay.C.T"),
-                            labels=c("Practiced Cue","Unpracticed Cues")) +
+  if (length(unique(IVdata$timepoint[IVdata$subject == unique(IVdata$subject)[1]]))>2) {
+    IVplot <- ggplot(filter(IVdata,is.finite(pc)) %>% 
+                       mutate(group_del_to_imm = replace(group,which(group=='delay' & timepoint ==3),'immediate'),
+                              group_imm_to_del = replace(group,which(group=='immediate' & timepoint ==2),'delay'),
+                              grouping1 = interaction(group_del_to_imm,chain,type),
+                              grouping2 = interaction(group_imm_to_del,chain,type)),
+                     aes(x=timepoint, shape = type, color=chain, y=pc,ymax=.85,ymin=.15)) +
+      geom_point(size=3) +
+      geom_line(aes(group = grouping1),size=.75) +
+      scale_color_discrete("Condition",labels = c("2 Cues, 1=Tested & 2=Unpracticed",
+                                                  "1 Cue, No Practice",
+                                                  "1 Cue, Restudied",
+                                                  "1 Cue, Tested")) + 
+      scale_shape_discrete("Type", labels=c("real" = "Obs. Data","model" = "PCL Model")) + 
       scale_x_discrete("Group",expand=c(0,.25),labels=c("Immediate","Delay")) + 
-      scale_color_discrete("Practice Method",labels = c("No Practice", "Restudy Practice","Cued Recall Practice")) + 
       ylab("Final Test Accuracy") + 
-      mytheme +
-      ggtitle('Final Cued Recall Accuracy By Practice Type and Cue Type')
+      mytheme +  theme(legend.key.height=unit(2,"line")) + 
+      ggtitle('Cued Recall Accuracy')
     
-    conPlot_grouped <-  ggplot(filter(conAcc_grouped,type=='real'),
+    conPlot <-  ggplot(filter(conAcc,type=='real'),
                                aes(x=other_type, y= pc,fill=prac_acc,ymax=1)) + 
       geom_bar(position='dodge',stat="identity") +
       geom_point(shape= 19, size = 3, position = position_dodge(width=0.9),
-                 data = filter(conAcc_grouped,type=='model')) +
+                 data = filter(conAcc,type=='model')) +
       # label n observations in each cell
       geom_text(aes(y=-.025,label =n, group=prac_acc),
                 position = position_dodge(width=0.9)) +
@@ -116,6 +104,28 @@ plotPCL <- function(model="std") {
       scale_y_continuous("Final Test Accuracy",expand=c(0,.025)) +
       mytheme + 
       ggtitle('Conditional Final Test Accuracy')
+    
+    jointPlot <- ggplot(data = rbind(filter(IVdata, timepoint != 1,chain %in% 2:3) %>%
+                                               select(group,type,xaxis,pc),
+                                             filter(jointAcc, chain %in% c(1,5)) %>%
+                                               select(group,type,xaxis,pc)) %>%
+                                  mutate(xaxis = replace(xaxis,xaxis=="2.3", "2.2"),
+                                         xaxis = replace(xaxis,xaxis=="3.3", "3.2"),
+                                         cues = factor(ifelse(grepl("1.",xaxis),2,1))),
+                                aes(x=xaxis, y= pc, color = type)) + 
+      geom_point(size= 3) +
+      facet_grid(group~. ) + #,labeller=function(...) { return(c("Immediate","Delayed"))}) + 
+      scale_x_discrete(labels = c("2.2" = "Control","3.2" = "Restudy","1.cor.cor" ="2 Cue: Cor. & Cor.",
+                                  "5.cor.cor"  = "1 Cue: Cor & Cor", "1.cor.inc"  = "2 Cues: Cor. & Inc.",
+                                  "5.cor.inc" = "1 Cue: Cor. & Inc.", "1.inc.cor"  = "2 Cue: Inc. & Cor.",
+                                  "5.inc.cor"  = "1 Cue: Inc. & Cor.", "1.inc.inc" = "2 Cue: Inc. & Inc." ,
+                                  "5.inc.inc"  = "1 Cue: Inc. & Inc."),
+                       name = "Condition") +
+      scale_color_discrete("Type", labels=c("real" = "Obs. Data","model" = "PCL Model")) + 
+      scale_y_continuous("Proportion",limit=0:1) + 
+      mytheme + theme(axis.text.x = element_text(size=rel(1))) +
+      ggtitle("All Condtions")
+    
     m$plots <- list(accAgg = IVplot_grouped, condAccAgg = conPlot_grouped)
     
   } else {
@@ -176,7 +186,8 @@ plotPCL <- function(model="std") {
       
       m$plots[[k]] <- list(acc= IVplot, cond_acc = conPlot, joint_acc = jointPlot)
       k=k+1
-  }
+    }
+    
     IVdata_grouped <- IVdata %>% group_by(group,practice,other_type,chain, type, timepoint, xaxis,variable) %>% 
       summarise(pc= mean(pc)) %>% ungroup() %>%
       mutate(chain = replace(chain,chain==4,1))
