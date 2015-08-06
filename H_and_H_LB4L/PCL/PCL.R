@@ -40,12 +40,19 @@ multinomialLL <- function(obs,pred,N){
   err <- -sum(ll)
   return(err)
 }
-PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),
-                   data=NULL, fitting=FALSE) {
+PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03),
+                fixed = c(theta=.5, nFeat=100, nSim=1000, nList=15, Tmin=NA, Tmax=NA, lambda=NA, Time=NA),
+                data=cbind(read.csv(file.path('..','allData_by_groups.csv')),
+                                pred_prac_acc = NA, pred_final_acc = NA,
+                                pred_acc_plus= NA,pred_acc_neg= NA,
+                                pred_prac_and_final=NA,pred_prac_and_not_final=NA,
+                                pred_not_prac_and_final=NA,pred_not_prac_and_not_final=NA),
+                fitting=FALSE) {
   
   p <- c(free,fixed)
 
-  if (any(p[names(p) %in% c("ER","LR","TR","F1","F2","theta")] > 1) || any(p[names(p) %in% c("ER","LR","TR","F1","F2","lambda","theta")] < 0)) {
+  if (any(p[names(p) %in% c("ER","LR","TR","F1","F2","theta")] > 1, na.rm=T) || 
+      any(p[names(p) %in% c("ER","LR","TR","F1","F2","lambda","theta")] < 0, na.rm=T)) {
     err <- 100000
     return(err)
   }
@@ -61,25 +68,25 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(
   init_mem_C1 <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
   init_mem_C2 <- matrix(rbinom(mxn,p['nFeat'], p['ER']),nrow=p['nSim'],ncol=p['nList'])
   init_thresh <- matrix(rbinom(mxn,p['nFeat'], p['theta']),nrow=p['nSim'],ncol=p['nList'])
-  prac <- recall(init_mem_C1,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  prac <- recall(init_mem_C1,init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   
   #control no practice
   #imm
   controlImmStrengths <- init_mem_C1 - rbinom(mxn, init_mem_C1, p['F1'])
-  controlImmAcc <- recall(controlImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  controlImmAcc <- recall(controlImmStrengths, init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   #del
   controlDelStrengths <- init_mem_C1 - rbinom(mxn, init_mem_C1, p['F2'])
-  controlDelAcc <- recall(controlDelStrengths,init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  controlDelAcc <- recall(controlDelStrengths,init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   # study practice
   #imm
   restudyStrengths <- init_mem_C1 + rbinom(mxn,p['nFeat']-init_mem_C1, p['LR'])
   restudyImmStrengths  <- restudyStrengths - rbinom(mxn,restudyStrengths, p['F1'])
-  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
+  restudyImmAcc<-recall(restudyImmStrengths, init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])  
   #del
   restudyDelStrengths <- restudyStrengths - rbinom(mxn,restudyStrengths, p['F2'])
-  restudyDelAcc <- recall(restudyDelStrengths, init_thresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  restudyDelAcc <- recall(restudyDelStrengths, init_thresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   # test practice
   testStrengths <- init_mem_C1 #copy strengths and thresholds from practice test 
@@ -88,19 +95,19 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(
   testStrengths[prac] <- init_mem_C1[prac] + rbinom(sum(prac),p['nFeat']-init_mem_C1[prac], p['LR'])
   testThresh[prac] <- init_thresh[prac] - rbinom(sum(prac),init_thresh[prac], p['TR'])
   testImmStrengths <- testStrengths -rbinom(mxn,testStrengths, p['F1'])
-  testImmAcc <- recall(testImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testImmAcc <- recall(testImmStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   #del
   testDelStrengths <- testStrengths - rbinom(mxn,testStrengths, p['F2'])
-  testDelAcc <- recall(testDelStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testDelAcc <- recall(testDelStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   
   
   #no practice, other cue test practice
   #imm
   testOCImmStrengths <- init_mem_C2 - rbinom(mxn, init_mem_C2, p['F1'])
-  testOCImmAcc<- recall(testOCImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testOCImmAcc<- recall(testOCImmStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   #del
   testOCDelStrengths <- init_mem_C2 - rbinom(mxn, init_mem_C2, p['F2'])
-  testOCDelAcc<- recall(testOCImmStrengths, testThresh, p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testOCDelAcc<- recall(testOCImmStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
 
   
   avgsImm <- lapply(list(prac=prac, chain1 = testOCImmAcc, chain1plus =  testOCImmAcc[prac], chain1neg = testOCImmAcc[!prac],
@@ -116,7 +123,7 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(
                          chain5_not_prac_not_final = (!prac & !testImmAcc)
                          ),
                     mean)
-  avgsDel<- lapply(list(chain1 = testOCDelAcc, chain1plus =  testOCDelAcc[prac], chain1neg = testOCDelAcc[!prac],
+  avgsDel<- lapply(list(prac=prac,chain1 = testOCDelAcc, chain1plus =  testOCDelAcc[prac], chain1neg = testOCDelAcc[!prac],
                         chain1_prac_final = (prac & testOCDelAcc),
                         chain1_prac_not_final = (prac & !testOCDelAcc),
                         chain1_not_prac_final = (!prac & testOCDelAcc),
@@ -132,25 +139,25 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(
                   "pred_prac_and_not_final","pred_not_prac_and_final","pred_not_prac_and_not_final")
   
   #Immediate Predictions
-  immRows <- which(data$group=="immediate")  
-  data$pred_acc[!is.na(data$acc)[immRows]] <- avgsImm$prac
-  data[(data$chain==1)[immRows], insertCols] <- avgsImm[c("chain1", "chain1plus","chain1neg",
+  immRows <- data$group=="immediate"  
+  data$pred_prac_acc[!is.na(data$prac_acc) & immRows] <- avgsImm$prac
+  data[data$chain==1 & immRows, insertCols] <- avgsImm[c("chain1", "chain1plus","chain1neg",
                                                      "chain1_prac_final","chain1_prac_not_final",
                                                      "chain1_not_prac_final","chain1_not_prac_not_final")]
-  data$pred_final_acc[(data$chain==2)[immRows]] <- avgsImm$chain2
-  data$pred_final_acc[(data$chain==3)[immRows]] <- avgsImm$chain3
-  data[(data$chain==5)[immRows], insertCols] <- avgsImm[c("chain5", "chain5plus","chain5neg",
+  data$pred_final_acc[data$chain==2 & immRows] <- avgsImm$chain2
+  data$pred_final_acc[data$chain==3 & immRows] <- avgsImm$chain3
+  data[data$chain==5 & immRows, insertCols] <- avgsImm[c("chain5", "chain5plus","chain5neg",
                                                        "chain5_prac_final","chain5_prac_not_final",
                                                        "chain5_not_prac_final","chain5_not_prac_not_final")]
   #Delay Predictions
-  delRows <- which(data$group=="delay")  
-  data$pred_acc[!is.na(data$acc)[delRows]] <- avgsDel$prac
-  data[(data$chain==1)[delRows], insertCols] <- avgsDel[c("chain1", "chain1plus","chain1neg",
+  delRows <-data$group=="delay"  
+  data$pred_prac_acc[!is.na(data$prac_acc) & delRows] <- avgsDel$prac
+  data[data$chain==1 & delRows, insertCols] <- avgsDel[c("chain1", "chain1plus","chain1neg",
                                                           "chain1_prac_final","chain1_prac_not_final",
                                                           "chain1_not_prac_final","chain1_not_prac_not_final")]
-  data$pred_final_acc[(data$chain==2)[delRows]] <- avgsDel$chain2
-  data$pred_final_acc[(data$chain==3)[delRows]] <- avgsDel$chain3
-  data[(data$chain==5)[delRows], insertCols] <- avgsDel[c("chain5", "chain5plus","chain5neg",
+  data$pred_final_acc[data$chain==2 & delRows] <- avgsDel$chain2
+  data$pred_final_acc[data$chain==3 & delRows] <- avgsDel$chain3
+  data[data$chain==5 & delRows, insertCols] <- avgsDel[c("chain5", "chain5plus","chain5neg",
                                                           "chain5_prac_final","chain5_prac_not_final",
                                                           "chain5_not_prac_final","chain5_not_prac_not_final")]
   
@@ -161,11 +168,9 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03), fixed = c(
   N <- c(data$n[data$practice %in% c('C','S') & is.na(data$other_type)], 
          unlist(data$n[!is.na(data$pred_acc_plus)], use.names = FALSE))
   err <- binomialLL(obs=obs[1:4],pred=preds[1:4],N=N[1:4]) + 
-    multinomialLL(obs=obs[5:12],pred=preds[5:12],N=rep(N[5:6],each=4))
+    multinomialLL(obs=obs[5:12],pred=preds[5:20],N=rep(N[5:6],each=8))
   
-  
-  err <- g2(obs=data$acc[!is.na(data$acc)],pred=data$pred_acc[!is.na(data$acc)],N=15*length(data$acc[!is.na(data$acc)]))
-  if (fitting) {
+    if (fitting) {
     return(err)
   } else {
     return(data)
