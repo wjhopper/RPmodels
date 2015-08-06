@@ -107,7 +107,7 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03),
   testOCImmAcc<- recall(testOCImmStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
   #del
   testOCDelStrengths <- init_mem_C2 - rbinom(mxn, init_mem_C2, p['F2'])
-  testOCDelAcc<- recall(testOCImmStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
+  testOCDelAcc<- recall(testOCDelStrengths, testThresh, p['space'], p['Tmin'], p['Tmax'], p['Time'],p['lambda'])
 
   
   avgsImm <- lapply(list(prac=prac, chain1 = testOCImmAcc, chain1plus =  testOCImmAcc[prac], chain1neg = testOCImmAcc[!prac],

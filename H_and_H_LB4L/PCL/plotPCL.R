@@ -114,9 +114,12 @@ plotPCL <- function(model="std") {
         scale_x_discrete(labels = c("2.2" = "Control","3.2" = "Restudy",
                                     "2.3" = "Control","3.3" = "Restudy",
                                     "1.cor.cor" ="2 Cue: Cor. & Cor.",
-                                    "5.cor.cor"  = "1 Cue: Cor & Cor", "1.cor.inc"  = "2 Cues: Cor. & Inc.",
-                                    "5.cor.inc" = "1 Cue: Cor. & Inc.", "1.inc.cor"  = "2 Cue: Inc. & Cor.",
-                                    "5.inc.cor"  = "1 Cue: Inc. & Cor.", "1.inc.inc" = "2 Cue: Inc. & Inc." ,
+                                    "1.cor.inc"  = "2 Cues: Cor. & Inc.",
+                                    "1.inc.cor"  = "2 Cue: Inc. & Cor.",
+                                    "1.inc.inc" = "2 Cue: Inc. & Inc.",
+                                    "5.cor.cor"  = "1 Cue: Cor & Cor", 
+                                    "5.cor.inc" = "1 Cue: Cor. & Inc.", 
+                                    "5.inc.cor"  = "1 Cue: Inc. & Cor.",
                                     "5.inc.inc"  = "1 Cue: Inc. & Inc."),
                          name = "Condition") +
         scale_color_discrete("Type", labels=c("real" = "Obs. Data","model" = "PCL Model")) + 
@@ -162,7 +165,7 @@ plotPCL <- function(model="std") {
                                                 "1 Cue, Restudied",
                                                 "1 Cue, Tested")) + 
     scale_shape_discrete("Type", labels=c("real" = "Obs. Data","model" = "PCL Model")) + 
-    scale_x_discrete("Group",expand=c(0,.25),labels=c("Immediate","Delay")) + 
+    scale_x_discrete("Group",expand=c(0,.25),labels=c("Practice","Immediate","Delay")) + 
     ylab("Final Test Accuracy") + 
     mytheme +  theme(legend.key.height=unit(2,"line")) + 
     ggtitle('Cued Recall Accuracy')
@@ -195,10 +198,14 @@ plotPCL <- function(model="std") {
                             aes(x=xaxis, y= pc, color = type)) + 
     geom_point(size= 3) +
     facet_grid(group~. ) + #,labeller=function(...) { return(c("Immediate","Delayed"))}) + 
-    scale_x_discrete(labels = c("2.2" = "Control","3.2" = "Restudy","1.cor.cor" ="2 Cue: Cor. & Cor.",
-                                "5.cor.cor"  = "1 Cue: Cor & Cor", "1.cor.inc"  = "2 Cues: Cor. & Inc.",
-                                "5.cor.inc" = "1 Cue: Cor. & Inc.", "1.inc.cor"  = "2 Cue: Inc. & Cor.",
-                                "5.inc.cor"  = "1 Cue: Inc. & Cor.", "1.inc.inc" = "2 Cue: Inc. & Inc." ,
+    scale_x_discrete(labels = c("2.2" = "Control","3.2" = "Restudy",
+                                "1.cor.cor" ="2 Cue: Cor. & Cor.",
+                                "1.cor.inc"  = "2 Cues: Cor. & Inc.",
+                                "1.inc.cor"  = "2 Cue: Inc. & Cor.",
+                                "1.inc.inc" = "2 Cue: Inc. & Inc.",
+                                "5.cor.cor"  = "1 Cue: Cor & Cor", 
+                                "5.cor.inc" = "1 Cue: Cor. & Inc.", 
+                                "5.inc.cor"  = "1 Cue: Inc. & Cor.",
                                 "5.inc.inc"  = "1 Cue: Inc. & Inc."),
                      name = "Condition") +
     scale_color_discrete("Type", labels=c("real" = "Obs. Data","model" = "PCL Model")) + 
