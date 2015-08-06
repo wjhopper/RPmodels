@@ -166,9 +166,9 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03),
   obs <- c(data$final_acc[data$practice %in% c('C','S') & is.na(data$other_type)], # control and study practice
            unlist(t(data[!is.na(data$pred_acc_plus),gsub("pred_","",tail(insertCols,4))]), use.names = FALSE))# items with test practice 
   N <- c(data$n[data$practice %in% c('C','S') & is.na(data$other_type)], 
-         unlist(data$n[!is.na(data$pred_acc_plus)], use.names = FALSE))
-  err <- binomialLL(obs=obs[1:4],pred=preds[1:4],N=N[1:4]) + 
-    multinomialLL(obs=obs[5:12],pred=preds[5:20],N=rep(N[5:6],each=8))
+         data$n[!is.na(data$pred_acc_plus)])
+  err <- binomialLL(obs=obs[1:4],pred=preds[1:4],N=15) + 
+    multinomialLL(obs=obs[5:20],pred=preds[5:20],N=15)
   
     if (fitting) {
     return(err)
@@ -177,9 +177,9 @@ PCL <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,F2=.1,space=.03),
   }
 }
 
-PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03), 
-                  fixed = c(Tmin=1, Tmax=10, lambda=.5,theta=.5,nFeat=100,nSim=1000,nList=15,Time=10),
-                  data=cbind(subset(read.csv(file.path('..','allData_by_subjects.csv')),subject==17),
+PCLss <- function(free= c(ER=.53,LR=.15,TR =.1, F1=.1,space=.03), 
+                  fixed = c(theta=.5,nFeat=100,nSim=1000,nList=15,Tmin=NA, Tmax=NA, lambda=NA,Time=NA),
+                  data=cbind(subset(read.csv(file.path('..','allData_by_subjects.csv')),subject==89),
                              pred_prac_acc = NA, pred_final_acc = NA,
                              pred_acc_plus= NA,pred_acc_neg= NA,
                              pred_prac_and_final=NA,pred_prac_and_not_final=NA,
@@ -188,7 +188,8 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03),
   
   p <- c(free,fixed)
 
-  if (any(p[names(p) %in% c("ER","LR","TR","F1","theta","space")] > 1) || any(p[names(p) %in% c("ER","LR","TR","F1","lambda","theta","space")] < 0)) {
+  if (any(p[names(p) %in% c("ER","LR","TR","F1","theta","space")] > 1,na.rm = TRUE) || 
+      any(p[names(p) %in% c("ER","LR","TR","F1","lambda","theta","space")] < 0,na.rm = TRUE)) {
     err <- 100000
     return(err)
   } 
@@ -260,17 +261,14 @@ PCLss <- function(free= c(ER=.58,LR=.07,TR =.4, F1=.1,space=.03),
                                             "chain5_prac_final","chain5_prac_not_final",
                                             "chain5_not_prac_final","chain5_not_prac_not_final")]
   
-  preds <- c(data$pred_prac_acc[!is.na(data$pred_prac_acc)], # practice accuracy
-             data$pred_final_acc[data$practice %in% c('C','S') & is.na(data$other_type)], # control and study practice
+  preds <- c(data$pred_final_acc[data$practice %in% c('C','S') & is.na(data$other_type)], # control and study practice
              unlist(t(data[!is.na(data$pred_acc_plus),tail(insertCols,4)]), use.names = FALSE)) # items with test practice 
-  obs <- c(data$prac_acc[!is.na(data$pred_prac_acc)], # practice accuracy
-           data$final_acc[data$practice %in% c('C','S') & is.na(data$other_type)], # control and study practice
+  obs <- c(data$final_acc[data$practice %in% c('C','S') & is.na(data$other_type)], # control and study practice
            unlist(t(data[!is.na(data$pred_acc_plus),gsub("pred_","",tail(insertCols,4))]), use.names = FALSE))# items with test practice 
-  N <- c(data$n[!is.na(data$pred_prac_acc)], 
-         data$n[data$practice %in% c('C','S') & is.na(data$other_type)], 
-         unlist(data$n[!is.na(data$pred_acc_plus)], use.names = FALSE))
-  err <- binomialLL(obs=obs[1:4],pred=preds[1:4],N=N[1:4]) + 
-    multinomialLL(obs=obs[5:12],pred=preds[5:12],N=rep(N[5:6],each=4))
+  N <- c(data$n[data$practice %in% c('C','S') & is.na(data$other_type)], 
+         data$n[!is.na(data$pred_acc_plus)])
+  err <- binomialLL(obs=obs[1:2],pred=preds[1:2],N=N[1:2]) + 
+    multinomialLL(obs=obs[3:10],pred=preds[3:10],N=rep(N[3:4],each=4))
   if (fitting) {
     return(err)
   } else {
