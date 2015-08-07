@@ -1,0 +1,41 @@
+---
+title: "PCL by Subjects: Time Parameters Free, No Forgetting"
+---
+```{r knitr_setup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE  }
+library(knitr)
+model <- 'ss_timeFree_noForgetting'
+read_chunk(file.path(getwd(),'chunks.R'))
+```
+
+```{r envSetup, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE }
+```
+
+```{r drawPlots, cache=FALSE,echo=FALSE, warning=F, include=FALSE, message=FALSE  }
+if (file.exists(paste(model,"results.Rdata",sep="_"))) {
+  load(paste(model,"results.Rdata",sep="_"))
+  if (is.null(m$plots)) {
+    source("plotPCL.R")
+    m$plots <- plotPCL(model)
+  }
+} else {
+  source("plotPCL.R")
+  m <- plotPCL(model,plotListOnly = FALSE)
+}
+```
+
+# Model Specs
+```{r model, results='asis'}
+<<modelInfo>>
+modelInfo(m)
+```
+# Model Results by Subject
+```{r subject,results='asis'}
+<<subjectResults>>
+subjectResults(m)
+```
+
+# Averaged Results
+```{r averages,results='asis'}
+<<subjectAverages>>
+  subjectAverages(m)
+```
